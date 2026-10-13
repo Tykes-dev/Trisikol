@@ -3,6 +3,7 @@ node_modules/
 dist/
 target/
 build/
+/artifacts/
 
 # Environment and local configuration
 .env

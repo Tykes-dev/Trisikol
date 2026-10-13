@@ -38,6 +38,7 @@ class TripWorkflowTests {
     @Autowired RideRepository rides;
     @Autowired CashRepository cash;
     @Autowired FarePolicyRepository policies;
+    @Autowired QuoteRepository quoteRepository;
     @Autowired org.springframework.transaction.support.TransactionTemplate transactions;
     final JsonMapper json = JsonMapper.builder().build();
     static final String PASSWORD = "Trip-tests-only-password!";
@@ -178,5 +179,59 @@ class TripWorkflowTests {
         policies.saveAndFlush(new FarePolicy(new BigDecimal("99"), new BigDecimal("1.5"), new BigDecimal("10"),
                 new BigDecimal("1"), "Test policy update", "TEST"));
         assertEquals(74, book(p, quote, false).get("fare").get("totalFare").asInt());
+    }
+
+    @Test void profileEditsAffectOnlyTheSignedInAccountAndRequireCsrf() throws Exception {
+        var owner = session(Account.Role.PASSENGER); var stranger = session(Account.Role.PASSENGER);
+        var body = json.writeValueAsString(Map.of("name", "  Updated passenger  "));
+        assertEquals(403, owner.browser.send("PUT", "/auth/profile", body, false).statusCode());
+        assertEquals(401, new Browser().send("PUT", "/auth/profile", body, true).statusCode());
+        var response = owner.browser.send("PUT", "/auth/profile", body, true);
+        assertEquals(200, response.statusCode());
+        var updated = json.readTree(response.body());
+        assertEquals("Updated passenger", updated.get("name").asText());
+        assertEquals(owner.account.getMobile(), updated.get("mobile").asText());
+        assertEquals("PASSENGER", updated.get("role").asText());
+        assertEquals("Updated passenger", owner.browser.get("/auth/me").get("name").asText());
+        assertEquals(stranger.account.getName(), stranger.browser.get("/auth/me").get("name").asText());
+        assertEquals(400, owner.browser.send("PUT", "/auth/profile", "{\"name\":\" \"}", true).statusCode());
+    }
+
+    @Test void routeRateLimitIsPerAccountAndDoesNotBlockReadingTrips() throws Exception {
+        var p = session(Account.Role.PASSENGER);
+        String body = json.writeValueAsString(input("REGULAR"));
+        for (int i = 0; i < 30; i++) assertEquals(201, p.browser.send("POST", "/passenger/quotes", body, true).statusCode());
+        var limited = p.browser.send("POST", "/passenger/quotes", body, true);
+        assertEquals(429, limited.statusCode()); assertEquals("60", limited.headers().firstValue("Retry-After").orElseThrow());
+        p.browser.get("/passenger/rides");
+        quote(session(Account.Role.PASSENGER), false, "REGULAR");
+    }
+
+    @Test void expiredQuotesAndOldWalkInTerminalPinsAreRejected() throws Exception {
+        var p = session(Account.Role.PASSENGER);
+        var q = quote(p, false, "REGULAR");
+        transactions.executeWithoutResult(status -> {
+            var saved = quoteRepository.findById(q.get("quoteId").asText()).orElseThrow();
+            saved.expiresAt = Instant.now().minusSeconds(1); quoteRepository.save(saved);
+        });
+        p.browser.post("/passenger/rides", Map.of("quoteId", q.get("quoteId").asText()), 409);
+        var driver = session(Account.Role.DRIVER);
+        var walk = quote(driver, true, "REGULAR");
+        var original = trips.terminal();
+        trips.updateTerminal(new TripService.TerminalInput(original.name(), original.latitude().add(new BigDecimal("0.001")), original.longitude()));
+        driver.browser.post("/driver/queue/join", Map.of(), 200);
+        driver.browser.post("/driver/walk-ins", Map.of("quoteId", walk.get("quoteId").asText()), 409);
+        driver.browser.post("/driver/queue/leave", Map.of(), 200);
+        trips.updateTerminal(new TripService.TerminalInput(original.name(), original.latitude(), original.longitude()));
+    }
+
+    @Test void suspensionAndDuplicateJoinsPreserveQueueRules() throws Exception {
+        var driver = session(Account.Role.DRIVER);
+        driver.browser.post("/driver/queue/join", Map.of(), 200);
+        driver.browser.post("/driver/queue/join", Map.of(), 200);
+        assertEquals(1, queue.count());
+        trips.updateDriver(driver.account.getId(), new TripService.VehicleInput(false, "TEST", "TEST", "Test tricycle"));
+        assertEquals(0, queue.count());
+        driver.browser.post("/driver/queue/join", Map.of(), 409);
     }
 }

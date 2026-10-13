@@ -1,6 +1,8 @@
 # Development progress
 
-Snapshot date: 2026-10-13. Development was paused to establish GitHub version control.
+Updated: 2026-10-13. The core single-terminal cash-trip milestone has passed local
+verification on `feature/trip-validation`. This remains a portfolio application,
+with the production/mobile limitations listed below.
 
 ## Implemented in this snapshot
 
@@ -18,26 +20,36 @@ Snapshot date: 2026-10-13. Development was paused to establish GitHub version co
 - Connected admin totals, fare settings, terminal settings and driver vehicles.
 - Profile-name updates; mobile metadata and a public offline fallback.
 
-## Last completed verification before pause
+## Verified results
 
-- 15 backend tests passed: authentication/fare authorization and six trip-workflow tests.
-- Frontend lint and production build passed before the subsequent small additions.
+- 22 backend tests passed and the application jar packaged successfully.
+- Frontend lint, production build and five routing-helper tests passed.
 - Actual V3 startup migration succeeded against the local file database, after backup.
 - A server quote using explicitly approved demo coordinates returned a 1.956 km
   route, PHP 52 total and 41 route points through the frontend proxy.
-- A synthetic passenger signed in and its empty history was observed in the
-  browser at 390 × 844. Other roles were tested through backend APIs, not all
-  visually checked on physical devices.
+- Isolated browser checks covered administrator driver creation, vehicle setup,
+  terminal edits and fare revisions; passenger profile editing; FIFO assignment;
+  driver acceptance/start/completion; new bookings after completion/cancellation;
+  walk-ins, histories, earnings and admin audit events.
+- A first-tap map selection issue was found and fixed: pin actions now open
+  immediately rather than requiring another tap on the marker.
+- In the isolated fixture route, policy base fare 45 yielded app cash 57/net 55/fee 2
+  and walk-in cash 55/net 55/fee 0. Two completed trips produced cash 112/net 110/fee 2.
+  Cancelled trips did not add ledger records.
+- Restarting the isolated backend preserved the ledger, trip events, terminal,
+  profile changes and fare policy; sign-in was required again.
+- GPS-policy tests reject stale, imprecise, invalid and outside-terminal readings.
+- Phone-width (390 × 844) and desktop browser checks were performed. The built
+  preview showed the public offline fallback after the preview server was stopped.
+  This does not verify physical-phone installation or native behavior.
 
-## Resume checks
+## Remaining verification
 
-1. Rerun backend tests, frontend lint/build and routing unit tests after the latest changes.
-2. Test profile-name authorization and the quote request limiter.
-3. Check fresh quotes after completion/cancellation and retries after ambiguous network failures.
-4. Verify admin vehicle/settings forms and driver actions in independent browser sessions.
-5. Verify saved trip/ledger state after backend restart; check GPS validation in non-demo mode.
-6. Validate mobile installation/offline fallback using a production build and a real phone.
-7. Verify MySQL migrations and locking before switching from local H2.
+1. Validate mobile installation, real GPS and connectivity changes on a physical phone.
+2. Verify MySQL migrations and locking before switching from local H2.
+3. Exercise actual interrupted-network retries on a device; automated tests cover
+   repeated booking/completion idempotency, but not every transport failure.
+4. Perform deployment/HTTPS and load checks after choosing hosting and distribution.
 
 ## Remaining product work
 
@@ -52,3 +64,5 @@ tested at a desk. The normal configuration requires a fresh location reading.
 Client-reported GPS alone is not proof against spoofing.
 
 Local database backups and synthetic QA records are not published to GitHub.
+Screenshots are stored locally under ignored `artifacts/ui-qa/`. See TESTING.md
+for reproducible module checks and the isolated UI launcher.

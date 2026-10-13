@@ -74,9 +74,9 @@ Backend: run `mvnw.cmd test` with JAVA_HOME configured. Integration tests cover 
 
 Manual flow: sign up -> log in -> refresh -> inspect personal profile -> attempt /admin -> log out -> reopen /passenger. Repeat using an admin-created driver. Test a stopped backend for connection errors.
 
-Accounts, fare policies and the core cash-trip workflow are now connected, with
-the latest changes awaiting final verification. See PROGRESS.md for the snapshot
-status. Phone ownership verification, recovery, payment settlement, production
+Accounts, fare policies and the core cash-trip workflow are now connected and
+locally tested. See PROGRESS.md and TESTING.md for evidence and remaining checks.
+Phone ownership verification, recovery, payment settlement, production
 monitoring and deployment hardening remain unfinished. A valid mobile format is
 not proof of phone ownership.
 

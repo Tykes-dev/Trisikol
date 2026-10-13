@@ -7,9 +7,13 @@ history, not a tamper-proof approval process. Concurrent admin updates are not
 currently guarded by a revision confirmation step.
 
 Initial settings: PHP 40 base fare covering 1.5 km, PHP 10 additional fare per km,
-and a separate PHP 1 app service fee per km. Walk-in fee rules, discounts,
-rounding, routing and authoritative quotes are not implemented in this module.
-PassengerHome still uses its existing frontend calculation.
+and a separate PHP 1 app service fee per km. This began as a settings-only module;
+the subsequent trip workflow now provides routing, quotes and cash-ledger integration.
+Passenger and walk-in quotes now use these settings on the backend, with a saved
+policy/price snapshot. The frontend displays the returned amounts. Additional
+fare uses `ceil(max(0, distanceKm - baseDistanceKm))`; app fees use
+`ceil(distanceKm) * appServiceFeePerKm`. Walk-ins have no app fee. The retained
+20% category discount is explicitly a demo policy and is not verified eligibility.
 
 ## API
 
