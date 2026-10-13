@@ -1,5 +1,5 @@
 import { MapContainer, CircleMarker, Polyline, Popup, useMapEvents, useMap } from 'react-leaflet';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import MapTiles from '../../components/common/MapTiles';
 import Button from '../../components/common/Button';
 import 'leaflet/dist/leaflet.css';
@@ -16,18 +16,24 @@ function Camera({ positions }) {
   }, [map, positions]);
   return null;
 }
+function SelectedPin({ selected, setPickup, setDropoff }) {
+  const marker = useRef(null);
+  useEffect(() => { marker.current?.openPopup(); }, [selected]);
+  return <CircleMarker ref={marker} center={[selected.lat, selected.lng]} radius={10}
+    bubblingMouseEvents={false} pathOptions={{ color: '#8B663F' }}>
+    <Popup><div className="pin-actions" onClick={(event) => event.stopPropagation()}>
+      {setPickup && <button type="button" onClick={() => setPickup(selected)}>Set pickup</button>}
+      <button type="button" onClick={() => setDropoff(selected)}>Set drop-off</button>
+    </div></Popup>
+  </CircleMarker>;
+}
 export function TripMap({ pickup, dropoff, positions, onSelect, selected, setPickup, setDropoff }) {
   return <MapContainer center={[15.2155, 120.5487]} zoom={14} className="trip-map" zoomControl attributionControl={false}>
     <MapTiles /><MapEvents onSelect={onSelect} /><Camera positions={positions} />
     {positions?.length > 1 && <Polyline positions={positions} pathOptions={{ color: '#5C1A1A', weight: 5 }} />}
     {pickup && <CircleMarker center={[pickup.lat, pickup.lng]} radius={8} pathOptions={{ color: '#381414' }}><Popup>Pickup</Popup></CircleMarker>}
     {dropoff && <CircleMarker center={[dropoff.lat, dropoff.lng]} radius={8} pathOptions={{ color: '#A84444' }}><Popup>Drop-off</Popup></CircleMarker>}
-    {selected && <CircleMarker center={[selected.lat, selected.lng]} radius={10} pathOptions={{ color: '#8B663F' }}>
-      <Popup><div className="pin-actions">
-        {setPickup && <button type="button" onClick={() => setPickup(selected)}>Set pickup</button>}
-        <button type="button" onClick={() => setDropoff(selected)}>Set drop-off</button>
-      </div></Popup>
-    </CircleMarker>}
+    {selected && <SelectedPin selected={selected} setPickup={setPickup} setDropoff={setDropoff} />}
   </MapContainer>;
 }
 export function Category({ value, onChange, disabled }) {

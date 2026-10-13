@@ -98,7 +98,7 @@ public class TripService {
         var terminal = terminals.lockDispatch(); settle();
         eligible(driver.getId());
         if (active().stream().anyMatch(r -> driver.getId().equals(r.driverId))) throw conflict("You already have an active trip.");
-        if (requireLocation) validatePosition(position, terminal);
+        if (requireLocation) TerminalLocationPolicy.validate(position, terminal, Instant.now());
         if (queue.findByDriverId(driver.getId()).isEmpty()) queue.saveAndFlush(new QueueEntry(driver.getId()));
         dispatch(); return driverState(driver);
     }
@@ -253,19 +253,6 @@ public class TripService {
     private static BigDecimal sum(List<CashEntry> entries, String field) {
         return entries.stream().map(e -> field.equals("cash") ? e.cashCollected : field.equals("net") ? e.driverNet : e.platformDue)
                 .reduce(BigDecimal.ZERO.setScale(2), BigDecimal::add);
-    }
-    private static void validatePosition(Position p, Terminal t) {
-        Instant now = Instant.now();
-        if (p == null || p.latitude() == null || p.longitude() == null || p.accuracy() == null || p.capturedAt() == null
-                || !Double.isFinite(p.latitude()) || !Double.isFinite(p.longitude()) || !Double.isFinite(p.accuracy())
-                || Math.abs(p.latitude()) > 90 || Math.abs(p.longitude()) > 180 || p.accuracy() < 0 || p.accuracy() > 50
-                || p.capturedAt().isBefore(now.minusSeconds(30)) || p.capturedAt().isAfter(now.plusSeconds(5))) {
-            throw bad("Use a fresh GPS reading with accuracy within 50 metres.");
-        }
-        double lat1 = Math.toRadians(p.latitude()), lat2 = Math.toRadians(t.latitude.doubleValue());
-        double dl = Math.toRadians(p.longitude() - t.longitude.doubleValue());
-        double a = Math.pow(Math.sin((lat1 - lat2) / 2), 2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(dl / 2), 2);
-        if (6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) > 100) throw bad("You must be within 100 metres of the terminal.");
     }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
     private static ResponseStatusException conflict(String message) { return new ResponseStatusException(HttpStatus.CONFLICT, message); }

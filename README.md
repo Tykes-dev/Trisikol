@@ -14,20 +14,22 @@ mobile build.
 
 ## Current milestone
 
-This commit saves a **work-in-progress development snapshot**:
+The current milestone is a tested **single-terminal cash-trip portfolio flow**:
 
 - Passenger signup, session login/logout, role authorization and admin-created driver accounts.
 - Database-backed fare revisions with administrator identity and change reasons.
 - Server-side road-route quotes, a FIFO terminal queue, booking and trip transitions.
 - Walk-in trips with no app service fee, and a cash ledger that records app fees separately from driver earnings.
 - Connected passenger, driver and administrator screens; vehicle registration and profile-name editing.
-- Mobile manifest and a public offline fallback, pending installation/device checks.
+- Mobile manifest and a tested public offline fallback; physical-device installation still needs verification.
 
-The last completed checks before development was paused were 15 backend tests,
-frontend lint/build, a live OSRM quote using approved demo pins, and a passenger
-screen check at a 390 × 844 viewport. Subsequent profile, rate-limit, quote-refresh
-and mobile metadata changes still need their final verification. Do not treat this
-snapshot as a finished release.
+Verification: 22 backend tests, five frontend routing-helper tests, frontend
+lint/build and backend packaging passed. Browser checks covered admin setup,
+passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
+profile editing, repeat bookings, persisted cash records after restart, and the
+production offline fallback. UI checks used an isolated test database and fixture
+routes. A separate OSRM check using approved demo pins returned a real road quote.
+This is a portfolio milestone, not a production transport release.
 
 Prices, discount handling, dispatch timeouts and location thresholds are portfolio
 placeholders, not an approved LGU/TODA operating policy. Electronic payments,
@@ -36,8 +38,8 @@ deployment remain unfinished. Local H2 development has been exercised; MySQL and
 physical-device behavior still need validation.
 
 See [authentication setup](docs/AUTHENTICATION.md) for startup commands,
-first-admin setup and database options, and [progress](docs/PROGRESS.md) for the
-current implementation and remaining checks.
+first-admin setup and database options, [testing](docs/TESTING.md) for module
+checks, and [progress](docs/PROGRESS.md) for the remaining work.
 
 Quick start from the workspace root:
 
@@ -49,6 +51,7 @@ In a second terminal:
 
 ```powershell
 cd trisikol-web
+npm ci
 npm run dev -- --host 127.0.0.1 --port 5174 --strictPort
 ```
 

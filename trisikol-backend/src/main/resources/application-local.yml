@@ -12,4 +12,4 @@ server:
 trisikol:
   dispatch:
     # Local portfolio mode: queue joins do not claim verified physical presence.
-    require-location: false
+    require-location: ${DISPATCH_REQUIRE_LOCATION:false}
