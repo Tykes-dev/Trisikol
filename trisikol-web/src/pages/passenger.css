@@ -1,0 +1,56 @@
+.passenger-shell { position: relative; height: 100dvh; min-height: 0; width: 100%; overflow: hidden; background: #f8f4f0; font: 14px/1.5 system-ui, sans-serif; color-scheme: light; }
+.passenger-shell *, .passenger-shell *::before, .passenger-shell *::after { box-sizing: border-box; }
+.passenger-shell h1, .passenger-shell h2, .passenger-shell h3 { color: #5c1a1a; letter-spacing: normal; }
+.passenger-icon { display: inline-flex; align-items: center; justify-content: center; font-style: normal; flex-shrink: 0; }
+.passenger-map-layer { position: absolute; inset: 0; z-index: 0; }
+.passenger-map-layer .trip-map { height: 100%; min-height: 0; border-radius: 0; }
+.passenger-map-layer .leaflet-top .leaflet-control { margin-top: calc(90px + env(safe-area-inset-top, 0px)); }
+.passenger-topbar { position: absolute; top: calc(28px + env(safe-area-inset-top, 0px)); left: 20px; right: 20px; z-index: 10; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.passenger-topbar h1 { margin: 0; font-size: 22px; font-weight: 800; text-shadow: 0 2px 10px white; }
+.passenger-floating-button, .passenger-icon-button { display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: white; color: #5c1a1a; cursor: pointer; font-size: 24px; flex-shrink: 0; }
+.passenger-floating-button { pointer-events: auto; box-shadow: 0 4px 14px rgb(92 26 26 / 15%); }
+.passenger-sheet { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; display: flex; flex-direction: column; max-height: calc(100dvh - 130px - env(safe-area-inset-top, 0px)); background: white; border-radius: 32px 32px 0 0; box-shadow: 0 -10px 40px rgb(92 26 26 / 15%); padding: 0 24px; will-change: transform; }
+.passenger-sheet-handle { display: flex; justify-content: center; align-items: center; height: 32px; min-height: 32px; width: 100%; padding: 0; border: 0; background: transparent; cursor: grab; touch-action: none; }
+.passenger-sheet-handle span { width: 48px; height: 5px; background: rgb(187 162 136 / 50%); border-radius: 10px; }
+.passenger-sheet-heading { min-height: 72px; flex-shrink: 0; padding: 2px 0 14px; }
+.passenger-sheet-heading h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+.passenger-sheet-heading p { margin: 0; color: #80675b; font-size: 12px; }
+.passenger-sheet-content { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+.passenger-location-fields { display: grid; gap: 12px; }
+.passenger-location-fields label { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #f8f4f0; border: 1px solid #e8dace; border-radius: 12px; }
+.passenger-location-fields i { font-size: 22px; color: #5c1a1a; }
+.passenger-location-fields label:last-child i { color: #a47d58; }
+.passenger-location-fields span { min-width: 0; flex: 1; font-size: 11px; font-weight: 600; color: #80675b; }
+.passenger-location-fields input { width: 100%; min-width: 0; display: block; border: 0; background: transparent; padding: 3px 0 0; font: 600 14px system-ui, sans-serif; color: #381414; }
+.passenger-map-hint { font-size: 12px; color: #80675b; margin: 12px 0; }
+.passenger-fare-preview { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; background: #faf3eb; border: 1.5px solid rgb(187 162 136 / 30%); border-radius: 12px; }
+.passenger-fare-preview span, .passenger-eyebrow { text-transform: uppercase; letter-spacing: .06em; font-size: 11px; color: #80675b; font-weight: 700; }
+.passenger-fare-preview strong { color: #5c1a1a; font-size: 24px; font-weight: 800; }
+.passenger-options { margin-top: 14px; border-top: 1px solid #eee4da; padding-top: 10px; }
+.passenger-options summary { cursor: pointer; font-size: 13px; font-weight: 600; padding: 4px 0; }
+.passenger-policy-note { margin: 14px 0 0; color: #80675b; }
+.passenger-sheet .ride-card { padding: 16px; }
+.passenger-scrim { position: absolute; inset: 0; z-index: 20; border: 0; width: 100%; height: 100%; background: rgb(56 20 20 / 40%); backdrop-filter: blur(2px); }
+.passenger-drawer, .passenger-page { position: absolute; inset: 0; z-index: 30; background: #f8f4f0; display: flex; flex-direction: column; overflow: hidden; }
+.passenger-drawer { right: auto; width: 80%; max-width: 320px; background: white; box-shadow: 4px 0 24px rgb(0 0 0 / 15%); }
+.passenger-page-header { display: flex; align-items: center; gap: 10px; padding: calc(20px + env(safe-area-inset-top, 0px)) 16px 14px; background: white; flex-shrink: 0; box-shadow: 0 4px 12px rgb(92 26 26 / 5%); }
+.passenger-page-header h2 { font-size: 20px; margin: 0; font-weight: 800; }
+.passenger-page-content { padding: 24px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; flex: 1; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+.passenger-drawer .passenger-page-content { display: flex; flex-direction: column; }
+.passenger-menu-account { padding: 4px 0 28px; overflow-wrap: anywhere; }
+.passenger-menu-account strong, .passenger-menu-account span { display: block; }
+.passenger-menu-account span { font-size: 12px; color: #80675b; margin-top: 4px; }
+.passenger-drawer nav { display: grid; gap: 16px; }
+.passenger-drawer nav button, .passenger-logout { display: flex; align-items: center; gap: 12px; border: 0; padding: 12px 0; background: transparent; font: 600 17px system-ui, sans-serif; color: #5c1a1a; cursor: pointer; text-align: left; }
+.passenger-drawer nav i { font-size: 22px; color: #c9956a; }
+.passenger-logout { margin-top: auto; border-top: 1px solid #e8dace; padding-top: 20px; color: #a84444; }
+.passenger-profile-intro { text-align: center; margin-bottom: 24px; }
+.passenger-avatar { width: 100px; height: 100px; margin: 0 auto 16px; border-radius: 50%; border: 4px solid white; background: #5c1a1a; color: white; display: grid; place-items: center; font-size: 48px; box-shadow: 0 8px 24px rgb(0 0 0 / 10%); }
+.passenger-profile-intro h3 { margin: 0; font-size: 22px; }
+.passenger-profile-intro p { font-size: 14px; color: #80675b; margin: 4px 0 0; }
+.passenger-cash-method { display: flex; align-items: center; gap: 12px; background: white; border: 2px solid #5c1a1a; border-radius: 12px; padding: 16px; margin: 16px 0 24px; }
+.passenger-cash-method i { font-size: 26px; }
+.passenger-cash-method span { margin-left: auto; font-size: 12px; color: #5c1a1a; }
+.passenger-shell button:focus-visible, .passenger-shell summary:focus-visible { outline: 3px solid #bba288; outline-offset: 3px; }
+@media (max-width: 360px) { .passenger-sheet { padding: 0 16px; } .passenger-page-content { padding: 20px 16px; } }
+@media (prefers-reduced-motion: reduce) { .passenger-sheet { will-change: auto; } }

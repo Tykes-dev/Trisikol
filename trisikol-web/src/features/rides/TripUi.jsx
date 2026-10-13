@@ -9,11 +9,16 @@ function MapEvents({ onSelect }) {
   useMapEvents({ click: (event) => onSelect?.({ lat: event.latlng.lat, lng: event.latlng.lng }) });
   return null;
 }
-function Camera({ positions }) {
+function Camera({ positions, bottomInset = 0 }) {
   const map = useMap();
   useEffect(() => {
-    if (positions?.length > 1) map.fitBounds(positions, { padding: [35, 35], maxZoom: 16 });
-  }, [map, positions]);
+    if (positions?.length > 1) {
+      const height = map.getSize().y;
+      const topPadding = bottomInset ? Math.min(110, Math.max(35, height - bottomInset - 80)) : 35;
+      map.fitBounds(positions, { paddingTopLeft: [35, topPadding],
+        paddingBottomRight: [35, Math.min(bottomInset + 35, height - topPadding - 40)], maxZoom: 16 });
+    }
+  }, [map, positions, bottomInset]);
   return null;
 }
 function SelectedPin({ selected, setPickup, setDropoff }) {
@@ -27,9 +32,9 @@ function SelectedPin({ selected, setPickup, setDropoff }) {
     </div></Popup>
   </CircleMarker>;
 }
-export function TripMap({ pickup, dropoff, positions, onSelect, selected, setPickup, setDropoff }) {
-  return <MapContainer center={[15.2155, 120.5487]} zoom={14} className="trip-map" zoomControl attributionControl={false}>
-    <MapTiles /><MapEvents onSelect={onSelect} /><Camera positions={positions} />
+export function TripMap({ pickup, dropoff, positions, onSelect, selected, setPickup, setDropoff, presentation = 'standard', bottomInset = 0 }) {
+  return <MapContainer center={[15.2155, 120.5487]} zoom={14} className="trip-map" zoomControl={presentation !== 'fullscreen'} attributionControl={false}>
+    <MapTiles /><MapEvents onSelect={onSelect} /><Camera positions={positions} bottomInset={bottomInset} />
     {positions?.length > 1 && <Polyline positions={positions} pathOptions={{ color: '#5C1A1A', weight: 5 }} />}
     {pickup && <CircleMarker center={[pickup.lat, pickup.lng]} radius={8} pathOptions={{ color: '#381414' }}><Popup>Pickup</Popup></CircleMarker>}
     {dropoff && <CircleMarker center={[dropoff.lat, dropoff.lng]} radius={8} pathOptions={{ color: '#A84444' }}><Popup>Drop-off</Popup></CircleMarker>}

@@ -111,6 +111,29 @@ produced an app total of 57 (net 55, fee 2) and a walk-in total of 55 (net 55, f
 After both completed, totals were cash 112, net 110 and platform due 2; cancelled
 trips added no ledger entries. Those values survived restart.
 
+## Passenger UI restoration checks (2026-10-13)
+
+The passenger screen now uses the original full-screen map, floating menu/profile
+controls, draggable booking sheet and slide-in secondary screens. Backend APIs,
+fare calculations, quote expiry, booking/cancellation and authentication are unchanged.
+
+1. Drag the sheet handle down/up, or click it: the map remains visible and the
+   collapsed form cannot receive keyboard focus.
+2. Tap the map and set a destination. Expand the sheet to see the server total;
+   open Passenger category and Fare details & routing for the existing controls.
+3. Book and cancel a synthetic trip, then open Menu → Ride History. The cancelled
+   trip must appear from the backend, not mock history.
+4. Open Profile, save the name, and return to the map. Menu → Payments shows Cash
+   only; it does not re-enable the old simulated e-wallet controls.
+5. Check a small phone viewport: the sheet content scrolls, with no horizontal
+   overflow. Escape closes a secondary screen; Tab stays inside its dialog.
+
+Browser checks passed at 390 × 844, 320 × 568 and 1280 × 800. In the isolated
+fixture setup, Regular quoted 57 and Student quoted 46; a new booking was created
+and cancelled through the restored UI, saved history displayed it, and profile
+saving worked. Dragging both directions, tap expansion/collapse, keyboard focus
+and cash-only display were checked. These are browser checks, not physical-phone tests.
+
 ## Physical presence and mobile limits
 
 Local mode skips presence checks for desk demonstrations. To test the location
