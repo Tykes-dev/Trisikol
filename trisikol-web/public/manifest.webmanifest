@@ -1,0 +1,12 @@
+{
+  "id": "/",
+  "name": "TrisiKol",
+  "short_name": "TrisiKol",
+  "description": "Portfolio demo for terminal dispatch and cash tricycle bookings.",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#381414",
+  "background_color": "#F8F2EC",
+  "icons": [{ "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

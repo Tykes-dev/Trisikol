@@ -1,0 +1,15 @@
+# Explicitly enable with --spring.profiles.active=local; not a deployment profile.
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/trisikol;MODE=MySQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: ''
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+trisikol:
+  dispatch:
+    # Local portfolio mode: queue joins do not claim verified physical presence.
+    require-location: false

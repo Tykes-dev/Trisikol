@@ -1,0 +1,12 @@
+:root {
+  --color-brand-primary: #BBA288;
+  --color-brand-dark: #381414;
+  --color-brand-mid: #4D1A1A;     /* ← new: card header + button */
+  --color-brand-bg: #6B2323;      /* ← new: page background */
+  --color-brand-light: #FFFFFF;
+}
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-brand-primary);
+}
