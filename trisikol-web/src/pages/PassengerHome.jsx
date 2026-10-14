@@ -11,6 +11,8 @@ import { isActive, money } from '../features/rides/format';
 import '../features/rides/trips.css';
 import './passenger.css';
 import ProfileEditor from '../features/auth/ProfileEditor';
+import useNotifications from '../features/notifications/useNotifications';
+import NotificationInbox from '../features/notifications/NotificationInbox';
 
 function Icon({ name }) {
   const paths = {
@@ -25,6 +27,7 @@ function Icon({ name }) {
     wallet: 'M20 7V4H6a3 3 0 0 0 0 6h15v11H6a3 3 0 0 1-3-3V7M21 13h-5v5h5M18 15h.01',
     cash: 'M3 5h18v14H3zM9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0M6 12h.01M18 12h.01',
     logout: 'M9 3H4v18h5M10 12h11M17 8l4 4l-4 4',
+    bell: 'M6 17h12l-2-3V8a4 4 0 0 0-8 0v6l-2 3M10 21h4',
   };
   return <i className="passenger-icon" aria-hidden="true"><svg width="1em" height="1em" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg></i>;
@@ -98,6 +101,7 @@ function BookingSheet({ title, subtitle, expanded, setExpanded, onInset, childre
 export default function PassengerHome() {
   const { user } = useAuth();
   const logout = useLogout();
+  const notifications = useNotifications();
   const [tab, setTab] = useState('Book');
   const [menuOpen, setMenuOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
@@ -152,6 +156,10 @@ export default function PassengerHome() {
       <h1>TrisiKol</h1>
       <button className="passenger-floating-button" aria-label="Open profile" onClick={() => openPage('Profile')}><Icon name="user" /></button>
     </header>
+    {tab === 'Book' && !menuOpen && notifications.inbox?.unreadCount > 0 && <button
+      className="passenger-notification-alert" onClick={() => openPage('Notifications')}>
+      <Icon name="bell" /><span aria-live="polite">{notifications.inbox.unreadCount} unread notifications</span>
+    </button>}
     <div inert={menuOpen || tab !== 'Book'}>
       <BookingSheet expanded={expanded} setExpanded={setExpanded} onInset={setBottomInset}
         title={active ? 'Your current trip' : 'Where to, Commuter?'}
@@ -180,6 +188,7 @@ export default function PassengerHome() {
       {menuOpen && <PassengerOverlay key="menu" title="Menu" onClose={closeMenu} drawer>
         <div className="passenger-menu-account"><strong>{user.name}</strong><span>{user.mobile}</span></div>
         <nav aria-label="Passenger navigation"><button onClick={() => openPage('History')}><Icon name="history" /> Ride History</button>
+          <button onClick={() => openPage('Notifications')}><Icon name="bell" /> Notifications ({notifications.inbox?.unreadCount || 0})</button>
           <button onClick={() => openPage('Payments')}><Icon name="wallet" /> Payments</button>
           <button onClick={() => openPage('Profile')}><Icon name="user" /> My Profile</button></nav>
         <button className="passenger-logout" onClick={logout}><Icon name="logout" /> Log Out</button>
@@ -195,6 +204,9 @@ export default function PassengerHome() {
       {tab === 'Payments' && <PassengerOverlay key="payments" title="Payment Methods" onClose={closePage}>
         <h3 className="passenger-eyebrow">Selected method</h3><div className="passenger-cash-method"><Icon name="cash" /><strong>Cash</strong><span>Selected</span></div>
         <p>Pay the displayed cash fare to your driver at completion. Electronic payments and e-wallet linking are not available.</p>
+      </PassengerOverlay>}
+      {tab === 'Notifications' && <PassengerOverlay key="notifications" title="Notifications" onClose={closePage}>
+        <NotificationInbox result={notifications} />
       </PassengerOverlay>}
     </AnimatePresence>
   </div>;

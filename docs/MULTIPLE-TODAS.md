@@ -44,9 +44,11 @@ terminalId. Driver walk-in quotes use the driver's assigned terminal.
 
 ## Branch checks
 
-This branch contains 25 backend tests. Run `mvnw.cmd package` in the backend,
+This branch now contains 26 backend tests after incorporating main's notifications.
+The original standalone TODA snapshot contained 25. Run `mvnw.cmd package` in the backend,
 and frontend lint/build plus `node --test src/services/routing.test.js`.
-The other two new features are deliberately excluded. The shared TestApi helper,
+Main's notification feature is retained; password recovery is deliberately excluded.
+The shared TestApi helper,
 where present, is test-only infrastructure, not a production feature.
 
 Use an isolated checkout/database for branch testing. Do not run this feature-only

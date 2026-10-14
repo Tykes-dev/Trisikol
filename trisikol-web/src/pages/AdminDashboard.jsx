@@ -9,6 +9,8 @@ import { RideCard } from '../features/rides/TripUi';
 import { money } from '../features/rides/format';
 import '../features/rides/trips.css';
 import ProfileEditor from '../features/auth/ProfileEditor';
+import useNotifications from '../features/notifications/useNotifications';
+import NotificationInbox from '../features/notifications/NotificationInbox';
 
 function VehicleEditor({ driver, terminals, onSaved, onClose }) {
   const [form, setForm] = useState(driver.vehicle);
@@ -68,6 +70,7 @@ function TerminalEditor({ current, onSaved, creating = false }) {
 }
 export default function AdminDashboard() {
   const { user } = useAuth(); const logout = useLogout();
+  const notifications = useNotifications();
   const [tab, setTab] = useState('Overview'); const [editing, setEditing] = useState(null);
   const [audit, setAudit] = useState(null); const [error, setError] = useState('');
   const [terminalId, setTerminalId] = useState(1); const [creating, setCreating] = useState(false);
@@ -85,7 +88,7 @@ export default function AdminDashboard() {
   }
   return <div className="workspace-shell">
     <header className="workspace-header"><div><h1>TrisiKol Admin</h1><small>{user.name} · {terminal?.name || 'Administration'}</small></div><button onClick={logout}>Log out</button></header>
-    <nav className="workspace-tabs" aria-label="Administrator navigation">{['Overview', 'Drivers', 'Queue', 'Trips', 'Settings', 'Profile'].map((name) => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => setTab(name)}>{name}</button>)}</nav>
+    <nav className="workspace-tabs" aria-label="Administrator navigation">{['Overview', 'Drivers', 'Queue', 'Trips', 'Settings', 'Profile', 'Notifications'].map((name) => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => setTab(name)}>{name}{name === 'Notifications' && ` (${notifications.inbox?.unreadCount || 0})`}</button>)}</nav>
     <main className="workspace-main">
       <label className="field">Selected TODA<select value={terminalId} onChange={(e) => { setTerminalId(Number(e.target.value)); setEditing(null); setCreating(false); }}>
         {terminals.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -108,6 +111,7 @@ export default function AdminDashboard() {
         {creating && <TerminalEditor creating current={{ name: '', latitude: terminal.latitude, longitude: terminal.longitude }} onSaved={(saved) => { setTerminalId(saved.id); setCreating(false); result.refresh(); }} />}
         <section className="workspace-card"><h2>Fare revision history</h2>{result.data[historyPath]?.map((policy) => <article key={policy.id}><h3>Revision #{policy.id}</h3><p>{new Date(policy.createdAt).toLocaleString()} · {policy.createdBy}</p><p>Base {money(policy.baseFare)} / {policy.baseDistanceKm} km · Extra {money(policy.extraFarePerKm)}/km · App fee {money(policy.appServiceFeePerKm)}/km</p><p>{policy.changeReason}</p></article>)}</section></>}
       {tab === 'Profile' && <ProfileEditor />}
+      {tab === 'Notifications' && <NotificationInbox result={notifications} />}
     </main>
   </div>;
 }

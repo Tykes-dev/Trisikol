@@ -9,6 +9,7 @@
 .passenger-topbar h1 { margin: 0; font-size: 22px; font-weight: 800; text-shadow: 0 2px 10px white; }
 .passenger-floating-button, .passenger-icon-button { display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: white; color: #5c1a1a; cursor: pointer; font-size: 24px; flex-shrink: 0; }
 .passenger-floating-button { pointer-events: auto; box-shadow: 0 4px 14px rgb(92 26 26 / 15%); }
+.passenger-notification-alert { position: absolute; z-index: 10; top: calc(92px + env(safe-area-inset-top, 0px)); left: 20px; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 40px); padding: 10px 14px; border: 1px solid #e8dace; border-radius: 24px; background: white; color: #5c1a1a; font: 600 12px system-ui, sans-serif; box-shadow: 0 4px 14px rgb(92 26 26 / 15%); cursor: pointer; }
 .passenger-sheet { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; display: flex; flex-direction: column; max-height: calc(100dvh - 130px - env(safe-area-inset-top, 0px)); background: white; border-radius: 32px 32px 0 0; box-shadow: 0 -10px 40px rgb(92 26 26 / 15%); padding: 0 24px; will-change: transform; }
 .passenger-sheet-handle { display: flex; justify-content: center; align-items: center; height: 32px; min-height: 32px; width: 100%; padding: 0; border: 0; background: transparent; cursor: grab; touch-action: none; }
 .passenger-sheet-handle span { width: 48px; height: 5px; background: rgb(187 162 136 / 50%); border-radius: 10px; }

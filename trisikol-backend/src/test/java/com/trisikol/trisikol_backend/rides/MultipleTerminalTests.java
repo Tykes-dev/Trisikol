@@ -51,6 +51,10 @@ class MultipleTerminalTests {
         var quote = p.api().request("POST", "/passenger/quotes", TestApi.quoteInput(other), 201);
         var ride = p.api().request("POST", "/passenger/rides", Map.of("quoteId", quote.get("quoteId").asText()), 201);
         assertEquals(second.account().getId().longValue(), ride.get("driver").get("id").asLong());
+        // Merge regression: terminal-scoped dispatch must still record recipient-private notifications.
+        assertEquals(2, p.api().get("/notifications").get("unreadCount").asInt());
+        assertEquals("New ride offer", second.api().get("/notifications").get("items").get(0).get("title").asText());
+        assertEquals(0, first.api().get("/notifications").get("unreadCount").asInt());
         assertEquals(1, first.api().get("/driver/state").get("position").asInt());
         assign(admin.api(), second, 1, 409);
         p.api().request("POST", "/passenger/rides/" + ride.get("id").asLong() + "/cancel", Map.of(), 200);

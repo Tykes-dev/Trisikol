@@ -22,8 +22,10 @@ The current milestone is a tested **multi-terminal cash-trip portfolio flow**:
 - Walk-in trips with no app service fee, and a cash ledger that records app fees separately from driver earnings.
 - Connected passenger, driver and administrator screens; vehicle registration and profile-name editing.
 - Mobile manifest and a tested public offline fallback; physical-device installation still needs verification.
+- Saved account-private ride notifications, with read/unread actions.
+- Manual TODA selection, separate queues/fare policies and driver assignment.
 
-Verification: 25 backend tests, five frontend routing-helper tests, frontend
+Verification: 26 backend tests, five frontend routing-helper tests, frontend
 lint/build and backend packaging passed. Browser checks covered admin setup,
 passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
 profile editing, repeat bookings, persisted cash records after restart, and the
@@ -63,5 +65,9 @@ own local configuration; never place private credentials in frontend `VITE_*` va
 
 ## Feature branch: Multiple TODAs and terminal queues
 
-This branch contains only this new feature, on top of the existing main application.
-See [implementation, tests and limitations](docs/MULTIPLE-TODAS.md). Other new features live in separate branches.
+This branch adds multiple TODAs on top of main, which now includes saved ride
+notifications. Both features are retained. Password recovery remains in its
+separate branch and is not included here.
+
+See [TODA implementation, tests and limitations](docs/MULTIPLE-TODAS.md) and
+[saved notification behavior](docs/RIDE-NOTIFICATIONS.md).
