@@ -1,0 +1,13 @@
+ALTER TABLE driver_profiles ADD COLUMN terminal_id BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE driver_profiles ADD CONSTRAINT fk_driver_terminal FOREIGN KEY (terminal_id) REFERENCES terminals(id);
+ALTER TABLE queue_entries ADD COLUMN terminal_id BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE queue_entries ADD CONSTRAINT fk_queue_terminal FOREIGN KEY (terminal_id) REFERENCES terminals(id);
+ALTER TABLE fare_policies ADD COLUMN terminal_id BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE fare_policies ADD CONSTRAINT fk_policy_terminal FOREIGN KEY (terminal_id) REFERENCES terminals(id);
+ALTER TABLE fare_quotes ADD COLUMN terminal_id BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE fare_quotes ADD CONSTRAINT fk_quote_terminal FOREIGN KEY (terminal_id) REFERENCES terminals(id);
+ALTER TABLE rides ADD COLUMN terminal_id BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE rides ADD CONSTRAINT fk_ride_terminal FOREIGN KEY (terminal_id) REFERENCES terminals(id);
+CREATE INDEX ix_queue_terminal ON queue_entries(terminal_id, id);
+CREATE INDEX ix_policy_terminal ON fare_policies(terminal_id, id);
+CREATE INDEX ix_ride_terminal ON rides(terminal_id, status);

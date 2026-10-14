@@ -14,7 +14,7 @@ mobile build.
 
 ## Current milestone
 
-The current milestone is a tested **single-terminal cash-trip portfolio flow**:
+The current milestone is a tested **multi-terminal cash-trip portfolio flow**:
 
 - Passenger signup, session login/logout, role authorization and admin-created driver accounts.
 - Database-backed fare revisions with administrator identity and change reasons.
@@ -22,8 +22,10 @@ The current milestone is a tested **single-terminal cash-trip portfolio flow**:
 - Walk-in trips with no app service fee, and a cash ledger that records app fees separately from driver earnings.
 - Connected passenger, driver and administrator screens; vehicle registration and profile-name editing.
 - Mobile manifest and a tested public offline fallback; physical-device installation still needs verification.
+- Saved account-private ride notifications, with read/unread actions.
+- Manual TODA selection, separate queues/fare policies and driver assignment.
 
-Verification: 23 backend tests, five frontend routing-helper tests, frontend
+Verification: 26 backend tests, five frontend routing-helper tests, frontend
 lint/build and backend packaging passed. Browser checks covered admin setup,
 passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
 profile editing, repeat bookings, persisted cash records after restart, and the
@@ -33,7 +35,7 @@ This is a portfolio milestone, not a production transport release.
 
 Prices, discount handling, dispatch timeouts and location thresholds are portfolio
 placeholders, not an approved LGU/TODA operating policy. Electronic payments,
-fee remittance, verified discounts, SMS recovery, multiple terminals and public
+fee remittance, verified discounts, SMS recovery, nearest-TODA/service-area matching and public
 deployment remain unfinished. Local H2 development has been exercised; MySQL and
 physical-device behavior still need validation.
 
@@ -61,7 +63,11 @@ Local database files, environment secrets, backups, private keys, business
 documents and local tool settings are excluded from version control. Supply your
 own local configuration; never place private credentials in frontend `VITE_*` values.
 
-## Feature branch: Saved ride notifications
+## Feature branch: Multiple TODAs and terminal queues
 
-This branch contains only this new feature, on top of the existing main application.
-See [implementation, tests and limitations](docs/RIDE-NOTIFICATIONS.md). Other new features live in separate branches.
+This branch adds multiple TODAs on top of main, which now includes saved ride
+notifications. Both features are retained. Password recovery remains in its
+separate branch and is not included here.
+
+See [TODA implementation, tests and limitations](docs/MULTIPLE-TODAS.md) and
+[saved notification behavior](docs/RIDE-NOTIFICATIONS.md).

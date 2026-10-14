@@ -36,6 +36,9 @@ public class UiTestServer {
                 if (repository.findByMobile("09170009002").isEmpty()) {
                     accounts.create("UI Test Passenger", "09170009002", "UI-test-only-password-2026!", Account.Role.PASSENGER);
                 }
+                if (repository.findByMobile("09170009003").isEmpty()) {
+                    accounts.create("UI Test Driver", "09170009003", "UI-test-only-password-2026!", Account.Role.DRIVER);
+                }
             };
         }
     }

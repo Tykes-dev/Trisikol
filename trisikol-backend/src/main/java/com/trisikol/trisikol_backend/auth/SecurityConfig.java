@@ -31,7 +31,7 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/me", "/api/auth/logout", "/api/auth/profile").authenticated()
             .requestMatchers("/api/notifications", "/api/notifications/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/api/fares/current").authenticated()
-            .requestMatchers(HttpMethod.GET, "/api/terminals/current").authenticated()
+            .requestMatchers(HttpMethod.GET, "/api/terminals/current", "/api/terminals").authenticated()
             .anyRequest().denyAll())
             .requestCache(cache -> cache.disable())
             .formLogin(login -> login.loginProcessingUrl("/api/auth/login").usernameParameter("mobile")

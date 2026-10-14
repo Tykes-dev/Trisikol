@@ -7,6 +7,7 @@ import java.time.Instant;
 public class FareQuote {
     @Id @Column(length = 36) String id;
     @Column(nullable = false) Long ownerId;
+    @Column(nullable = false) Long terminalId = 1L;
     @Column(nullable = false, length = 16) String source;
     @Column(nullable = false, length = 16) String category;
     @Column(nullable = false) Long policyId;

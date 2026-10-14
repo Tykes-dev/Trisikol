@@ -23,7 +23,7 @@ export default function DriverTerminal() {
   const state = result.data?.['/driver/state']; const terminal = result.data?.['/terminals/current'];
   const pickup = terminal ? { lat: Number(terminal.latitude), lng: Number(terminal.longitude) } : null;
   const quote = useFareQuote(walkIn && !state?.activeRide ? pickup : null, dropoff, category, true,
-    result.data?.['/driver/rides']?.[0]?.id || 0);
+    result.data?.['/driver/rides']?.[0]?.id || 0, terminal?.id || 1);
   async function perform(path, body) {
     if (busy) return;
     setBusy(true); setError('');
