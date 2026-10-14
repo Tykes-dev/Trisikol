@@ -29,6 +29,7 @@ public class SecurityConfig {
             .requestMatchers("/api/driver/**").hasRole("DRIVER")
             .requestMatchers("/api/passenger/**").hasRole("PASSENGER")
             .requestMatchers("/api/auth/me", "/api/auth/logout", "/api/auth/profile").authenticated()
+            .requestMatchers("/api/notifications", "/api/notifications/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/api/fares/current").authenticated()
             .requestMatchers(HttpMethod.GET, "/api/terminals/current").authenticated()
             .anyRequest().denyAll())
