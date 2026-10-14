@@ -14,7 +14,7 @@ mobile build.
 
 ## Current milestone
 
-The current milestone is a tested **single-terminal cash-trip portfolio flow**:
+The current milestone is a tested **multi-terminal cash-trip portfolio flow**:
 
 - Passenger signup, session login/logout, role authorization and admin-created driver accounts.
 - Database-backed fare revisions with administrator identity and change reasons.
@@ -23,7 +23,7 @@ The current milestone is a tested **single-terminal cash-trip portfolio flow**:
 - Connected passenger, driver and administrator screens; vehicle registration and profile-name editing.
 - Mobile manifest and a tested public offline fallback; physical-device installation still needs verification.
 
-Verification: 22 backend tests, five frontend routing-helper tests, frontend
+Verification: 25 backend tests, five frontend routing-helper tests, frontend
 lint/build and backend packaging passed. Browser checks covered admin setup,
 passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
 profile editing, repeat bookings, persisted cash records after restart, and the
@@ -33,7 +33,7 @@ This is a portfolio milestone, not a production transport release.
 
 Prices, discount handling, dispatch timeouts and location thresholds are portfolio
 placeholders, not an approved LGU/TODA operating policy. Electronic payments,
-fee remittance, verified discounts, SMS recovery, multiple terminals and public
+fee remittance, verified discounts, SMS recovery, nearest-TODA/service-area matching and public
 deployment remain unfinished. Local H2 development has been exercised; MySQL and
 physical-device behavior still need validation.
 
@@ -60,3 +60,8 @@ Open http://127.0.0.1:5174/login and create a passenger account. Local developme
 Local database files, environment secrets, backups, private keys, business
 documents and local tool settings are excluded from version control. Supply your
 own local configuration; never place private credentials in frontend `VITE_*` values.
+
+## Feature branch: Multiple TODAs and terminal queues
+
+This branch contains only this new feature, on top of the existing main application.
+See [implementation, tests and limitations](docs/MULTIPLE-TODAS.md). Other new features live in separate branches.

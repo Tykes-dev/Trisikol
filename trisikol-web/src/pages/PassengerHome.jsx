@@ -108,12 +108,21 @@ export default function PassengerHome() {
   const [dropoff, setDropoff] = useState(null);
   const [selected, setSelected] = useState(null);
   const [category, setCategory] = useState('REGULAR');
+  const [terminalId, setTerminalId] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const result = usePolling(['/passenger/rides', '/terminals/current']);
+  const result = usePolling(['/passenger/rides', '/terminals']);
+  const terminals = result.data?.['/terminals'] || [];
+  const terminal = terminals.find((item) => item.id === terminalId);
   const rides = result.data?.['/passenger/rides'] || [];
   const active = rides.find(isActive);
-  const quote = useFareQuote(active ? null : pickup, dropoff, category, false, rides[0]?.id || 0);
+  const quote = useFareQuote(active ? null : pickup, dropoff, category, false, rides[0]?.id || 0, terminalId);
+  function changeTerminal(event) {
+    const next = terminals.find((item) => item.id === Number(event.target.value));
+    if (!next) return;
+    setTerminalId(next.id); setSelected(null); setDropoff(null); setError('');
+    setPickup({ lat: Number(next.latitude), lng: Number(next.longitude) });
+  }
   async function book() {
     if (busy || quote.status !== 'ready') return;
     setBusy(true); setError('');
@@ -146,12 +155,16 @@ export default function PassengerHome() {
     <div inert={menuOpen || tab !== 'Book'}>
       <BookingSheet expanded={expanded} setExpanded={setExpanded} onInset={setBottomInset}
         title={active ? 'Your current trip' : 'Where to, Commuter?'}
-        subtitle={active ? 'Live trip updates · cash payment' : result.data?.['/terminals/current']?.name || 'Choose your pickup and destination'}>
+        subtitle={active ? 'Live trip updates · cash payment' : terminal?.name || 'Choose your pickup and destination'}>
           {(error || result.error) && <div className="workspace-alert" role="alert">{error || result.error} <button onClick={result.refresh}>Refresh</button></div>}
           {!result.data && !result.error && <p role="status">Loading your trips…</p>}
           {active ? <><RideCard ride={active} busy={busy || !!result.error}
             actions={active.status === 'IN_PROGRESS' ? [] : ['cancel']} onAction={cancel} /><p>Status updates automatically. Pay the displayed cash fare at completion.</p></>
-            : <><div className="passenger-location-fields">
+            : <><details className="passenger-options"><summary>TODA · {terminal?.name || 'Choose terminal'}</summary>
+              <label className="field">Booking terminal<select value={terminalId} onChange={changeTerminal} disabled={busy || !result.data || !!result.error}>
+                {terminals.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select><small>Choose manually. Nearest-TODA matching and approved service areas are not configured.</small></label>
+            </details><div className="passenger-location-fields">
               <label><Icon name="map-pin" /><span>Pick-up Location<input readOnly aria-label="Pick-up Location" value={`${pickup.lat.toFixed(5)}, ${pickup.lng.toFixed(5)}`} /></span></label>
               <label><Icon name="flag" /><span>Drop-off Location<input readOnly aria-label="Drop-off Location" placeholder="Tap map to set destination…" value={dropoff ? `${dropoff.lat.toFixed(5)}, ${dropoff.lng.toFixed(5)}` : ''} /></span></label>
             </div>

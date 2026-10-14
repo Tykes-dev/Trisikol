@@ -16,26 +16,36 @@ public class QuoteService {
     private final FarePolicyRepository policies;
     private final RoadRouting routing;
     private final TerminalRepository terminals;
+    private final DriverProfileRepository profiles;
     private final JsonMapper json = JsonMapper.builder().build();
     public QuoteService(QuoteRepository quotes, FarePolicyRepository policies,
-            RoadRouting routing, TerminalRepository terminals) {
+            RoadRouting routing, TerminalRepository terminals, DriverProfileRepository profiles) {
         this.quotes = quotes; this.policies = policies; this.routing = routing; this.terminals = terminals;
+        this.profiles = profiles;
     }
     public record Input(RoadRouting.Point pickup, RoadRouting.Point dropoff,
-            String pickupLabel, String dropoffLabel, String category) {}
+            String pickupLabel, String dropoffLabel, String category, Long terminalId) {
+        public Input(RoadRouting.Point pickup, RoadRouting.Point dropoff, String pickupLabel, String dropoffLabel, String category) {
+            this(pickup, dropoff, pickupLabel, dropoffLabel, category, null);
+        }
+    }
     public record View(String quoteId, Long policyId, String source, String category,
             RoadRouting.Point pickup, RoadRouting.Point dropoff, String pickupLabel, String dropoffLabel,
             BigDecimal distanceKm, BigDecimal rawFare, BigDecimal discountAmount,
             BigDecimal matrixFare, BigDecimal serviceFee, BigDecimal totalFare,
-            Instant expiresAt, List<List<Double>> positions) {}
+            Instant expiresAt, List<List<Double>> positions, Long terminalId, String terminalName) {}
 
     public View create(Account owner, Input input, String source) {
         if (input == null) throw bad("Choose pickup and drop-off locations.");
+        Long terminalId = input.terminalId() == null ? 1L : input.terminalId();
         RoadRouting.Point pickup = input.pickup();
         if (source.equals("WALK_IN")) {
-            var terminal = terminals.findById(1L).orElseThrow();
+            terminalId = profiles.findById(owner.getId()).map(DriverProfile::getTerminalId).orElse(1L);
+            if (input.terminalId() != null && !input.terminalId().equals(terminalId)) throw bad("Use your assigned terminal for a walk-in.");
+            var terminal = terminals.findById(terminalId).orElseThrow();
             pickup = new RoadRouting.Point(terminal.latitude.doubleValue(), terminal.longitude.doubleValue());
         }
+        var terminal = terminals.findById(terminalId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Terminal not found."));
         validate(pickup); validate(input.dropoff());
         if (pickup.equals(input.dropoff())) throw bad("Choose different pickup and drop-off locations.");
         String category = input.category() == null ? "REGULAR" : input.category();
@@ -44,7 +54,7 @@ public class QuoteService {
         String dropoffLabel = label(input.dropoffLabel(), "Pinned drop-off");
         // Network I/O happens before dispatch locks. Prices/distance never come from the browser.
         var route = routing.route(pickup, input.dropoff());
-        var policy = policies.findFirstByOrderByIdDesc().orElseThrow(() ->
+        var policy = policies.findFirstByTerminalIdOrderByIdDesc(terminal.getId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Fare settings are unavailable."));
         BigDecimal distance = route.distanceKm();
         BigDecimal extraKm = distance.subtract(policy.getBaseDistanceKm()).max(BigDecimal.ZERO)
@@ -56,6 +66,7 @@ public class QuoteService {
                 : distance.setScale(0, RoundingMode.CEILING).multiply(policy.getAppServiceFeePerKm()).setScale(2);
         FareQuote quote = new FareQuote();
         quote.id = UUID.randomUUID().toString(); quote.ownerId = owner.getId(); quote.source = source;
+        quote.terminalId = terminalId;
         quote.category = category; quote.policyId = policy.getId();
         quote.pickupLat = pickup.lat(); quote.pickupLng = pickup.lng();
         quote.dropoffLat = input.dropoff().lat(); quote.dropoffLng = input.dropoff().lng();
@@ -81,7 +92,8 @@ public class QuoteService {
         return new View(quote.id, quote.policyId, quote.source, quote.category,
                 new RoadRouting.Point(quote.pickupLat, quote.pickupLng), new RoadRouting.Point(quote.dropoffLat, quote.dropoffLng),
                 quote.pickupLabel, quote.dropoffLabel, quote.distanceKm, quote.rawFare, quote.discountAmount,
-                quote.matrixFare, quote.serviceFee, quote.totalFare, quote.expiresAt, positions);
+                quote.matrixFare, quote.serviceFee, quote.totalFare, quote.expiresAt, positions, quote.terminalId,
+                terminals.findById(quote.terminalId).orElseThrow().getName());
     }
     private static void validate(RoadRouting.Point point) {
         if (point == null || !Double.isFinite(point.lat()) || !Double.isFinite(point.lng())

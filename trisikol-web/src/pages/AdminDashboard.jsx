@@ -10,19 +10,20 @@ import { money } from '../features/rides/format';
 import '../features/rides/trips.css';
 import ProfileEditor from '../features/auth/ProfileEditor';
 
-function VehicleEditor({ driver, onSaved, onClose }) {
+function VehicleEditor({ driver, terminals, onSaved, onClose }) {
   const [form, setForm] = useState(driver.vehicle);
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('');
     try {
       await api('/admin/drivers/' + driver.account.id + '/vehicle', { method: 'PUT', body: {
-        enabled: form.enabled, bodyNumber: form.bodyNumber, plateNumber: form.plateNumber, vehicleModel: form.vehicleModel,
+        enabled: form.enabled, bodyNumber: form.bodyNumber, plateNumber: form.plateNumber, vehicleModel: form.vehicleModel, terminalId: Number(form.terminalId),
       } }); onSaved(); onClose();
     } catch (failure) { setError(failure.message); }
     finally { setBusy(false); }
   }
   return <section className="workspace-card"><h2>Vehicle: {driver.account.name}</h2><form onSubmit={submit}>
+    <label className="field">Assigned TODA<select value={form.terminalId} onChange={(e) => setForm({ ...form, terminalId: e.target.value })}>{terminals.map((terminal) => <option key={terminal.id} value={terminal.id}>{terminal.name}</option>)}</select><small>Driver must leave the queue and finish active trips before reassignment.</small></label>
     {[['bodyNumber', 'Body number'], ['plateNumber', 'Plate number'], ['vehicleModel', 'Vehicle model']].map(([key, label]) => <label className="field" key={key}>{label}<input required maxLength={key === 'vehicleModel' ? 100 : 30} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} /></label>)}
     <label><input type="checkbox" checked={form.enabled} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} /> Driver enabled</label>
     {error && <p role="alert">{error}</p>}<div className="action-row"><Button type="submit" disabled={busy}>Save vehicle</Button><Button disabled={busy} onClick={onClose}>Close</Button></div>
@@ -36,7 +37,7 @@ function FareEditor({ current, onSaved }) {
     try {
       await api('/admin/fare-policies', { method: 'POST', body: {
         baseFare: Number(form.baseFare), baseDistanceKm: Number(form.baseDistanceKm),
-        extraFarePerKm: Number(form.extraFarePerKm), appServiceFeePerKm: Number(form.appServiceFeePerKm), changeReason: reason,
+        extraFarePerKm: Number(form.extraFarePerKm), appServiceFeePerKm: Number(form.appServiceFeePerKm), changeReason: reason, terminalId: current.terminalId,
       } }); setMessage('Fare revision saved.'); setReason(''); onSaved();
     } catch (failure) { setMessage(failure.message); }
     finally { setBusy(false); }
@@ -47,21 +48,21 @@ function FareEditor({ current, onSaved }) {
     {message && <p role="status">{message}</p>}<Button type="submit" disabled={busy}>Save new fare revision</Button>
   </form></section>;
 }
-function TerminalEditor({ current, onSaved }) {
+function TerminalEditor({ current, onSaved, creating = false }) {
   const [form, setForm] = useState(current); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   async function submit(event) {
     event.preventDefault(); setBusy(true); setMessage('');
     try {
-      await api('/admin/terminal', { method: 'PUT', body: {
+      const saved = await api(creating ? '/admin/terminals' : '/admin/terminals/' + current.id, { method: creating ? 'POST' : 'PUT', body: {
         name: form.name, latitude: Number(form.latitude), longitude: Number(form.longitude),
-      } }); setMessage('Terminal saved.'); onSaved();
+      } }); setMessage('Terminal saved.'); onSaved(saved);
     } catch (failure) { setMessage(failure.message); }
     finally { setBusy(false); }
   }
-  return <section className="workspace-card"><h2>Terminal</h2><p>One terminal in this portfolio version. Its location can change when the queue and active trips are empty.</p>
+  return <section className="workspace-card"><h2>{creating ? 'Add TODA / terminal' : 'Edit TODA / terminal'}</h2><p>{creating ? 'Initial placeholder prices are copied from terminal 1. Review this TODA’s fare policy before use.' : 'Its location can change when this terminal’s queue and active trips are empty.'}</p>
     <form onSubmit={submit}><label className="field">Name<input required maxLength={100} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
       {['latitude', 'longitude'].map((key) => <label className="field" key={key}>{key}<input required type="number" step="0.0000001" min={key === 'latitude' ? '-90' : '-180'} max={key === 'latitude' ? '90' : '180'} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} /></label>)}
-      {message && <p role="status">{message}</p>}<Button type="submit" disabled={busy}>Save terminal</Button>
+      {message && <p role="status">{message}</p>}<Button type="submit" disabled={busy}>{creating ? 'Create terminal' : 'Save terminal'}</Button>
     </form>
   </section>;
 }
@@ -69,10 +70,14 @@ export default function AdminDashboard() {
   const { user } = useAuth(); const logout = useLogout();
   const [tab, setTab] = useState('Overview'); const [editing, setEditing] = useState(null);
   const [audit, setAudit] = useState(null); const [error, setError] = useState('');
-  const result = usePolling(['/admin/summary', '/admin/drivers', '/admin/queue', '/admin/rides',
-    '/fares/current', '/admin/fare-policies', '/terminals/current'], 6000);
+  const [terminalId, setTerminalId] = useState(1); const [creating, setCreating] = useState(false);
+  const queuePath = '/admin/queue?terminalId=' + terminalId;
+  const farePath = '/fares/current?terminalId=' + terminalId;
+  const historyPath = '/admin/fare-policies?terminalId=' + terminalId;
+  const result = usePolling(['/admin/summary', '/admin/drivers', queuePath, '/admin/rides', farePath, historyPath, '/terminals'], 6000);
   const summary = result.data?.['/admin/summary']; const drivers = result.data?.['/admin/drivers'] || [];
-  const rides = result.data?.['/admin/rides'] || []; const terminal = result.data?.['/terminals/current'];
+  const rides = result.data?.['/admin/rides'] || []; const terminals = result.data?.['/terminals'] || [];
+  const terminal = terminals.find((item) => item.id === terminalId);
   async function showAudit(id) {
     setError('');
     try { setAudit({ id, events: await api('/admin/rides/' + id + '/events') }); }
@@ -82,21 +87,26 @@ export default function AdminDashboard() {
     <header className="workspace-header"><div><h1>TrisiKol Admin</h1><small>{user.name} · {terminal?.name || 'Administration'}</small></div><button onClick={logout}>Log out</button></header>
     <nav className="workspace-tabs" aria-label="Administrator navigation">{['Overview', 'Drivers', 'Queue', 'Trips', 'Settings', 'Profile'].map((name) => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => setTab(name)}>{name}</button>)}</nav>
     <main className="workspace-main">
+      <label className="field">Selected TODA<select value={terminalId} onChange={(e) => { setTerminalId(Number(e.target.value)); setEditing(null); setCreating(false); }}>
+        {terminals.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+      </select><small>Queue and fare settings are scoped to this TODA. Overview and recent trips cover all TODAs.</small></label>
       {(result.error || error) && <div className="workspace-alert" role="alert">{result.error || error} <button onClick={result.refresh}>Refresh</button></div>}
       {!result.data && !result.error && <p>Loading saved records…</p>}
       {tab === 'Overview' && summary && <><h2>Saved operational totals</h2><div className="workspace-grid">
         {[['Trips', summary.rides], ['Completed', summary.completed], ['Queued drivers', summary.queuedDrivers], ['Cash collected', money(summary.cashCollected)], ['Driver net earnings', money(summary.driverNet)], ['Platform fees due', money(summary.platformDue)]].map(([label, value]) => <section className="workspace-card" key={label}><small>{label}</small><strong className="metric">{value}</strong></section>)}
       </div><p>Totals come from completed cash trips. Platform fees are recorded as due; remittance and electronic payments are not recorded here.</p></>}
       {tab === 'Drivers' && <><CreateDriverAccount onCreated={result.refresh} />
-        {editing && <VehicleEditor key={editing.account.id} driver={editing} onSaved={result.refresh} onClose={() => setEditing(null)} />}
+        {editing && <VehicleEditor key={editing.account.id} driver={editing} terminals={terminals} onSaved={result.refresh} onClose={() => setEditing(null)} />}
         {drivers.length === 0 && <p>No registered drivers yet.</p>}
-        {drivers.map((driver) => <section className="workspace-card" key={driver.account.id}><div className="section-title"><h2>{driver.account.name}</h2><span className="status-badge">{driver.vehicle.enabled ? 'Enabled' : 'Suspended'}</span></div><p>{driver.account.mobile} · Body {driver.vehicle.bodyNumber || 'unregistered'} · Plate {driver.vehicle.plateNumber || 'unregistered'}</p><p>{driver.vehicle.vehicleModel || 'Register a vehicle before this driver can join the queue.'}</p><Button disabled={!!result.error} onClick={() => setEditing(driver)}>Edit vehicle & eligibility</Button></section>)}
+        {drivers.map((driver) => <section className="workspace-card" key={driver.account.id}><div className="section-title"><h2>{driver.account.name}</h2><span className="status-badge">{driver.vehicle.enabled ? 'Enabled' : 'Suspended'}</span></div><p>{driver.account.mobile} · Body {driver.vehicle.bodyNumber || 'unregistered'} · Plate {driver.vehicle.plateNumber || 'unregistered'}</p><p>TODA: {terminals.find((item) => item.id === driver.vehicle.terminalId)?.name || 'Loading assignment…'}</p><p>{driver.vehicle.vehicleModel || 'Register a vehicle before this driver can join the queue.'}</p><Button disabled={!!result.error} onClick={() => setEditing(driver)}>Edit vehicle & eligibility</Button></section>)}
       </>}
-      {tab === 'Queue' && <><h2>Terminal queue</h2>{result.data?.['/admin/queue']?.length === 0 && <p>No drivers waiting.</p>}{result.data?.['/admin/queue']?.map((entry) => <section className="workspace-card" key={entry.driverId}><h2>#{entry.position} · {entry.name}</h2><p>Body {entry.bodyNumber} · Joined {new Date(entry.joinedAt).toLocaleString()}</p></section>)}</>}
+      {tab === 'Queue' && <><h2>{terminal?.name} queue</h2>{result.data?.[queuePath]?.length === 0 && <p>No drivers waiting.</p>}{result.data?.[queuePath]?.map((entry) => <section className="workspace-card" key={entry.driverId}><h2>#{entry.position} · {entry.name}</h2><p>Body {entry.bodyNumber} · Joined {new Date(entry.joinedAt).toLocaleString()}</p></section>)}</>}
       {tab === 'Trips' && <><h2>Recent trips</h2>{audit && <section className="workspace-card"><h2>Trip #{audit.id} history</h2>{audit.events.map((event) => <p key={event.id}>{event.status} · {event.actor} · {new Date(event.occurredAt).toLocaleString()}</p>)}<button onClick={() => setAudit(null)}>Close history</button></section>}{rides.length === 0 && <p>No trips yet.</p>}{rides.map((ride) => <section key={ride.id}><RideCard ride={ride} /><button onClick={() => showAudit(ride.id)}>View trip #{ride.id} events</button></section>)}</>}
-      {tab === 'Settings' && result.data && <><FareEditor key={result.data['/fares/current'].policyId} current={result.data['/fares/current']} onSaved={result.refresh} />
+      {tab === 'Settings' && result.data?.[farePath] && terminal && <><FareEditor key={result.data[farePath].policyId} current={result.data[farePath]} onSaved={result.refresh} />
         <TerminalEditor key={JSON.stringify(terminal)} current={terminal} onSaved={result.refresh} />
-        <section className="workspace-card"><h2>Fare revision history</h2>{result.data['/admin/fare-policies'].map((policy) => <article key={policy.id}><h3>Revision #{policy.id}</h3><p>{new Date(policy.createdAt).toLocaleString()} · {policy.createdBy}</p><p>Base {money(policy.baseFare)} / {policy.baseDistanceKm} km · Extra {money(policy.extraFarePerKm)}/km · App fee {money(policy.appServiceFeePerKm)}/km</p><p>{policy.changeReason}</p></article>)}</section></>}
+        <Button onClick={() => setCreating(!creating)}>{creating ? 'Close new terminal form' : 'Add another TODA'}</Button>
+        {creating && <TerminalEditor creating current={{ name: '', latitude: terminal.latitude, longitude: terminal.longitude }} onSaved={(saved) => { setTerminalId(saved.id); setCreating(false); result.refresh(); }} />}
+        <section className="workspace-card"><h2>Fare revision history</h2>{result.data[historyPath]?.map((policy) => <article key={policy.id}><h3>Revision #{policy.id}</h3><p>{new Date(policy.createdAt).toLocaleString()} · {policy.createdBy}</p><p>Base {money(policy.baseFare)} / {policy.baseDistanceKm} km · Extra {money(policy.extraFarePerKm)}/km · App fee {money(policy.appServiceFeePerKm)}/km</p><p>{policy.changeReason}</p></article>)}</section></>}
       {tab === 'Profile' && <ProfileEditor />}
     </main>
   </div>;
