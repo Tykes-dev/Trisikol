@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 @Entity @Table(name = "driver_profiles")
 public class DriverProfile {
     @Id Long accountId;
+    @Column(nullable = false) Long terminalId = 1L;
     @Column(nullable = false) boolean enabled = true;
     @Column(nullable = false, length = 30) String bodyNumber = "";
     @Column(nullable = false, length = 30) String plateNumber = "";
@@ -11,6 +12,7 @@ public class DriverProfile {
     protected DriverProfile() {}
     DriverProfile(Long id) { accountId = id; }
     public Long getAccountId() { return accountId; }
+    public Long getTerminalId() { return terminalId; }
     public boolean isEnabled() { return enabled; }
     public String getBodyNumber() { return bodyNumber; }
     public String getPlateNumber() { return plateNumber; }

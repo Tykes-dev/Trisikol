@@ -1,6 +1,8 @@
 package com.trisikol.trisikol_backend.rides;
 
 import com.trisikol.trisikol_backend.auth.*;
+import com.trisikol.trisikol_backend.notifications.NotificationService;
+import com.trisikol.trisikol_backend.fare.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
@@ -24,14 +26,17 @@ public class TripService {
     private final EventRepository events;
     private final CashRepository cash;
     private final AccountRepository accounts;
+    private final NotificationService notifications;
+    private final FarePolicyRepository policies;
     private final boolean requireLocation;
     public TripService(TerminalRepository terminals, DriverProfileRepository profiles, QueueRepository queue,
             RideRepository rides, QuoteRepository quotes, QuoteService prices, EventRepository events,
-            CashRepository cash, AccountRepository accounts,
+            CashRepository cash, AccountRepository accounts, NotificationService notifications, FarePolicyRepository policies,
             @Value("${trisikol.dispatch.require-location:true}") boolean requireLocation) {
         this.terminals = terminals; this.profiles = profiles; this.queue = queue; this.rides = rides;
         this.quotes = quotes; this.prices = prices; this.events = events; this.cash = cash;
-        this.accounts = accounts; this.requireLocation = requireLocation;
+        this.accounts = accounts; this.notifications = notifications; this.requireLocation = requireLocation;
+        this.policies = policies;
     }
     public record Person(Long id, String name) {}
     public record View(Long id, String status, Person passenger, Person driver, QuoteService.View fare,
@@ -42,18 +47,54 @@ public class TripService {
     public record DriverState(DriverProfile vehicle, Integer position, View activeRide,
             BigDecimal cashCollected, BigDecimal netEarnings, BigDecimal platformDue, List<CashEntry> ledger) {}
     public record Position(Double latitude, Double longitude, Double accuracy, Instant capturedAt) {}
-    public record VehicleInput(boolean enabled, String bodyNumber, String plateNumber, String vehicleModel) {}
+    public record VehicleInput(boolean enabled, String bodyNumber, String plateNumber, String vehicleModel, Long terminalId) {
+        public VehicleInput(boolean enabled, String bodyNumber, String plateNumber, String vehicleModel) {
+            this(enabled, bodyNumber, plateNumber, vehicleModel, null);
+        }
+    }
     public record TerminalInput(String name, BigDecimal latitude, BigDecimal longitude) {}
     public record Summary(long rides, long completed, int queuedDrivers,
             BigDecimal cashCollected, BigDecimal driverNet, BigDecimal platformDue) {}
 
     public TerminalView terminal() {
-        var terminal = terminals.findById(1L).orElseThrow();
+        return terminal(1L);
+    }
+    public TerminalView terminal(Long id) {
+        var terminal = terminals.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Terminal not found."));
         return new TerminalView(terminal.id, terminal.name, terminal.latitude, terminal.longitude, requireLocation);
     }
+    public TerminalView terminalFor(Account account) {
+        return terminal(account.getRole() == Account.Role.DRIVER ? profile(account.getId()).terminalId : 1L);
+    }
+    public List<TerminalView> terminals() { return terminals.findAllByOrderByIdAsc().stream().map(t -> terminal(t.id)).toList(); }
+    public TerminalView createTerminal(TerminalInput input, String actor) {
+        terminals.lockDispatch(); validateTerminal(input);
+        if (terminals.count() >= 100) throw conflict("This portfolio instance supports at most 100 terminals.");
+        if (terminals.existsByNameIgnoreCase(input.name().strip())) throw conflict("A terminal with that name already exists.");
+        var template = policies.findFirstByTerminalIdOrderByIdDesc(1L).orElseThrow();
+        var terminal = new Terminal(); terminal.id = terminals.findAllByOrderByIdAsc().stream().mapToLong(t -> t.id).max().orElse(0L) + 1;
+        terminal.name = input.name().strip(); terminal.latitude = input.latitude(); terminal.longitude = input.longitude();
+        terminals.saveAndFlush(terminal);
+        policies.saveAndFlush(new FarePolicy(template.getBaseFare(), template.getBaseDistanceKm(), template.getExtraFarePerKm(),
+                template.getAppServiceFeePerKm(), "Initial placeholder copied from terminal 1; operator must review before real use.", actor).forTerminal(terminal.id));
+        return terminal(terminal.id);
+    }
     public TerminalView updateTerminal(TerminalInput input) {
+        return updateTerminal(1L, input);
+    }
+    public TerminalView updateTerminal(Long id, TerminalInput input) {
         terminals.lockDispatch();
-        if (!active().isEmpty() || queue.count() > 0) throw conflict("Finish active trips and clear the queue before changing the terminal.");
+        terminal(id);
+        if (active().stream().anyMatch(r -> id.equals(r.terminalId)) || queue.existsByTerminalId(id)) throw conflict("Finish this terminal's active trips and clear its queue before changing it.");
+        validateTerminal(input);
+        if (terminals.findAllByOrderByIdAsc().stream().anyMatch(t -> !t.id.equals(id) && t.name.equalsIgnoreCase(input.name().strip()))) {
+            throw conflict("A terminal with that name already exists.");
+        }
+        var terminal = terminals.findById(id).orElseThrow();
+        terminal.name = input.name().strip(); terminal.latitude = input.latitude(); terminal.longitude = input.longitude();
+        terminals.saveAndFlush(terminal); return terminal(id);
+    }
+    private void validateTerminal(TerminalInput input) {
         if (input == null || input.name() == null || input.name().isBlank() || input.name().strip().length() > 100
                 || input.latitude() == null || input.longitude() == null
                 || input.latitude().abs().compareTo(new BigDecimal("90")) > 0
@@ -61,9 +102,6 @@ public class TripService {
                 || input.latitude().stripTrailingZeros().scale() > 7 || input.longitude().stripTrailingZeros().scale() > 7) {
             throw bad("Use a terminal name and valid coordinates with at most seven decimal places.");
         }
-        var terminal = terminals.findById(1L).orElseThrow();
-        terminal.name = input.name().strip(); terminal.latitude = input.latitude(); terminal.longitude = input.longitude();
-        terminals.saveAndFlush(terminal); return terminal();
     }
     public List<DriverView> drivers() {
         terminals.lockDispatch();
@@ -80,6 +118,11 @@ public class TripService {
             throw conflict("Finish or cancel the driver's active trip before suspending them.");
         }
         var profile = profile(account.getId());
+        Long terminalId = input.terminalId() == null ? profile.terminalId : input.terminalId(); terminal(terminalId);
+        if (!terminalId.equals(profile.terminalId) && (queue.findByDriverId(id).isPresent() || active().stream().anyMatch(r -> id.equals(r.driverId)))) {
+            throw conflict("The driver must leave the queue and finish active trips before changing terminals.");
+        }
+        profile.terminalId = terminalId;
         profile.enabled = input.enabled(); profile.bodyNumber = body; profile.plateNumber = plate; profile.vehicleModel = model;
         profiles.saveAndFlush(profile);
         if (!profile.enabled) queue.findByDriverId(id).ifPresent(queue::delete);
@@ -87,7 +130,7 @@ public class TripService {
     }
     public DriverState driverState(Account driver) {
         terminals.lockDispatch(); settle();
-        var waiting = queue.findAllByOrderByIdAsc(); Integer position = null;
+        var waiting = queue.findByTerminalIdOrderByIdAsc(profile(driver.getId()).terminalId); Integer position = null;
         for (int i = 0; i < waiting.size(); i++) if (waiting.get(i).driverId.equals(driver.getId())) position = i + 1;
         var entries = cash.findByDriverIdOrderByIdDesc(driver.getId());
         return new DriverState(profile(driver.getId()), position,
@@ -95,11 +138,12 @@ public class TripService {
                 sum(entries, "cash"), sum(entries, "net"), sum(entries, "due"), entries.stream().limit(50).toList());
     }
     public DriverState join(Account driver, Position position) {
-        var terminal = terminals.lockDispatch(); settle();
+        terminals.lockDispatch(); settle();
+        var terminal = terminals.findById(profile(driver.getId()).terminalId).orElseThrow();
         eligible(driver.getId());
         if (active().stream().anyMatch(r -> driver.getId().equals(r.driverId))) throw conflict("You already have an active trip.");
         if (requireLocation) TerminalLocationPolicy.validate(position, terminal, Instant.now());
-        if (queue.findByDriverId(driver.getId()).isEmpty()) queue.saveAndFlush(new QueueEntry(driver.getId()));
+        if (queue.findByDriverId(driver.getId()).isEmpty()) queue.saveAndFlush(new QueueEntry(driver.getId(), terminal.id));
         dispatch(); return driverState(driver);
     }
     public DriverState leave(Account driver) {
@@ -114,13 +158,14 @@ public class TripService {
         if (previous.isPresent()) return view(previous.get()); // Same quote is the idempotency key.
         if (!quote.expiresAt.isAfter(Instant.now())) throw conflict("Your quote expired. Request a new quote.");
         if (walkIn) {
-            var terminal = terminals.findById(1L).orElseThrow();
+            var terminal = terminals.findById(profile(owner.getId()).terminalId).orElseThrow();
+            if (!quote.terminalId.equals(terminal.id)) throw conflict("Your terminal assignment changed. Request a new walk-in quote.");
             if (quote.pickupLat != terminal.latitude.doubleValue() || quote.pickupLng != terminal.longitude.doubleValue()) {
                 throw conflict("The terminal moved. Request a new walk-in quote.");
             }
             eligible(owner.getId());
             if (active().stream().anyMatch(r -> owner.getId().equals(r.driverId))) throw conflict("You already have an active trip.");
-            var head = queue.findAllByOrderByIdAsc();
+            var head = queue.findByTerminalIdOrderByIdAsc(terminal.id);
             if (head.isEmpty() || !head.get(0).driverId.equals(owner.getId())) {
                 throw conflict("Join the queue and wait until you are first to take a walk-in.");
             }
@@ -129,10 +174,11 @@ public class TripService {
             throw conflict("You already have an active booking.");
         }
         Ride ride = new Ride(); ride.quoteId = quote.id;
+        ride.terminalId = quote.terminalId;
         ride.passengerId = walkIn ? null : owner.getId(); ride.driverId = walkIn ? owner.getId() : null;
         ride.status = walkIn ? "ACCEPTED" : "REQUESTED";
         ride.createdAt = Instant.now(); ride.updatedAt = ride.createdAt;
-        rides.saveAndFlush(ride); events.save(new RideEvent(ride, owner.getMobile())); dispatch();
+        rides.saveAndFlush(ride); recordEvent(ride, owner.getMobile(), null); dispatch();
         return view(ride);
     }
     public List<View> passengerRides(Account passenger) {
@@ -161,7 +207,8 @@ public class TripService {
                     require(ride, "OFFERED"); change(ride, "ACCEPTED", actor.getMobile());
                 }
                 case "decline" -> {
-                    require(ride, "OFFERED"); ride.driverId = null; change(ride, "REQUESTED", actor.getMobile());
+                    require(ride, "OFFERED"); var previousDriver = ride.driverId;
+                    ride.driverId = null; change(ride, "REQUESTED", actor.getMobile(), previousDriver);
                 }
                 case "start" -> {
                     if (ride.status.equals("IN_PROGRESS")) return view(ride);
@@ -179,9 +226,13 @@ public class TripService {
         dispatch(); return view(ride);
     }
     public List<QueueView> queueView() {
+        return queueView(1L);
+    }
+    public List<QueueView> queueView(Long terminalId) {
         terminals.lockDispatch(); settle();
+        terminal(terminalId);
         List<QueueView> result = new ArrayList<>();
-        for (var entry : queue.findAllByOrderByIdAsc()) {
+        for (var entry : queue.findByTerminalIdOrderByIdAsc(terminalId)) {
             var driver = accounts.findById(entry.driverId).orElseThrow();
             result.add(new QueueView(result.size() + 1, driver.getId(), driver.getName(), profile(driver.getId()).bodyNumber, entry.joinedAt));
         }
@@ -206,25 +257,49 @@ public class TripService {
             if (List.of("REQUESTED", "OFFERED").contains(ride.status) && ride.createdAt.plusSeconds(900).isBefore(now)) {
                 change(ride, "CANCELLED", "SYSTEM_TIMEOUT");
             } else if (ride.status.equals("OFFERED") && ride.offerExpiresAt != null && !ride.offerExpiresAt.isAfter(now)) {
-                ride.driverId = null; change(ride, "REQUESTED", "SYSTEM_OFFER_EXPIRED");
+                var previousDriver = ride.driverId;
+                ride.driverId = null; change(ride, "REQUESTED", "SYSTEM_OFFER_EXPIRED", previousDriver);
             }
         }
         dispatch();
     }
     private void dispatch() {
-        var waiting = new ArrayList<>(queue.findAllByOrderByIdAsc());
         for (var ride : rides.findByStatusInOrderByIdAsc(List.of("REQUESTED"))) {
+            var waiting = new ArrayList<>(queue.findByTerminalIdOrderByIdAsc(ride.terminalId));
             while (!waiting.isEmpty()) {
                 var entry = waiting.remove(0); queue.delete(entry); queue.flush();
-                if (!profile(entry.driverId).enabled || active().stream().anyMatch(r -> entry.driverId.equals(r.driverId))) continue;
+                if (!profile(entry.driverId).enabled || !profile(entry.driverId).terminalId.equals(ride.terminalId)
+                        || active().stream().anyMatch(r -> entry.driverId.equals(r.driverId))) continue;
                 ride.driverId = entry.driverId; change(ride, "OFFERED", "SYSTEM_DISPATCH");
                 ride.offerExpiresAt = Instant.now().plusSeconds(60); rides.save(ride); break;
             }
         }
     }
     private void change(Ride ride, String status, String actor) {
+        change(ride, status, actor, null);
+    }
+    private void change(Ride ride, String status, String actor, Long previousDriver) {
         ride.status = status; ride.updatedAt = Instant.now(); ride.offerExpiresAt = null;
-        rides.saveAndFlush(ride); events.save(new RideEvent(ride, actor));
+        rides.saveAndFlush(ride); recordEvent(ride, actor, previousDriver);
+    }
+    private void recordEvent(Ride ride, String actor, Long previousDriver) {
+        var event = events.saveAndFlush(new RideEvent(ride, actor));
+        String title = switch (ride.status) {
+            case "OFFERED" -> "New ride offer";
+            case "ACCEPTED" -> "Ride accepted";
+            case "IN_PROGRESS" -> "Trip started";
+            case "COMPLETED" -> "Trip completed";
+            case "CANCELLED" -> "Trip cancelled";
+            default -> "Waiting for a driver";
+        };
+        var recipients = new LinkedHashSet<Long>();
+        if (ride.passengerId != null) recipients.add(ride.passengerId);
+        if (ride.driverId != null) recipients.add(ride.driverId);
+        accounts.findByRoleOrderByIdAsc(Account.Role.ADMIN).forEach(a -> recipients.add(a.getId()));
+        for (var recipient : recipients) notifications.record(recipient, ride.id, event.getId(), title,
+                "Trip #" + ride.id + ": " + title.toLowerCase(Locale.ROOT) + ". Open your trips for details.", event.getOccurredAt());
+        if (previousDriver != null && !recipients.contains(previousDriver)) notifications.record(previousDriver,
+                ride.id, event.getId(), "Ride offer ended", "Your offer for trip #" + ride.id + " is no longer active.", event.getOccurredAt());
     }
     private View view(Ride ride) {
         return new View(ride.id, ride.status, person(ride.passengerId), person(ride.driverId),

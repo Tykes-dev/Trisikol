@@ -9,6 +9,7 @@ import java.time.Instant;
 public class FarePolicy {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false) private Long terminalId = 1L;
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal baseFare;
     @Column(nullable = false, precision = 10, scale = 3)
@@ -37,6 +38,8 @@ public class FarePolicy {
         this.createdAt = Instant.now();
     }
     public Long getId() { return id; }
+    public Long getTerminalId() { return terminalId; }
+    public FarePolicy forTerminal(Long terminalId) { this.terminalId = terminalId; return this; }
     public BigDecimal getBaseFare() { return baseFare; }
     public BigDecimal getBaseDistanceKm() { return baseDistanceKm; }
     public BigDecimal getExtraFarePerKm() { return extraFarePerKm; }

@@ -16,7 +16,11 @@ public class TripController {
     }
     public record Booking(String quoteId) {}
     private Account user(Principal principal) { return accounts.current(principal.getName()); }
-    @GetMapping("/terminals/current") public TripService.TerminalView terminal() { return trips.terminal(); }
+    @GetMapping("/terminals/current") public TripService.TerminalView terminal(Principal p) { return trips.terminalFor(user(p)); }
+    @GetMapping("/terminals") public List<TripService.TerminalView> terminals() { return trips.terminals(); }
+    @PostMapping("/admin/terminals") @ResponseStatus(HttpStatus.CREATED)
+    public TripService.TerminalView createTerminal(Principal p, @RequestBody TripService.TerminalInput input) { return trips.createTerminal(input, p.getName()); }
+    @PutMapping("/admin/terminals/{id}") public TripService.TerminalView updateTerminal(@PathVariable Long id, @RequestBody TripService.TerminalInput input) { return trips.updateTerminal(id, input); }
     @PutMapping("/admin/terminal") public TripService.TerminalView terminal(@RequestBody TripService.TerminalInput input) { return trips.updateTerminal(input); }
     @GetMapping("/admin/drivers") public List<TripService.DriverView> drivers() { return trips.drivers(); }
     @PutMapping("/admin/drivers/{id}/vehicle") public DriverProfile vehicle(@PathVariable Long id, @RequestBody TripService.VehicleInput input) { return trips.updateDriver(id, input); }
@@ -35,7 +39,7 @@ public class TripController {
     @PostMapping("/driver/queue/leave") public TripService.DriverState leave(Principal p) { return trips.leave(user(p)); }
     @PostMapping({"/driver/rides/{id}/{action}", "/passenger/rides/{id}/{action}"})
     public TripService.View action(Principal p, @PathVariable Long id, @PathVariable String action) { return trips.transition(user(p), id, action); }
-    @GetMapping("/admin/queue") public List<TripService.QueueView> queue() { return trips.queueView(); }
+    @GetMapping("/admin/queue") public List<TripService.QueueView> queue(@RequestParam(defaultValue = "1") Long terminalId) { return trips.queueView(terminalId); }
     @GetMapping("/admin/rides") public List<TripService.View> rides() { return trips.adminRides(); }
     @GetMapping("/admin/rides/{id}/events") public List<RideEvent> events(@PathVariable Long id) { return trips.audit(id); }
     @GetMapping("/admin/summary") public TripService.Summary summary() { return trips.summary(); }

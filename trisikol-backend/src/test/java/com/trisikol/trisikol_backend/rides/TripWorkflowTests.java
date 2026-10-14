@@ -234,4 +234,26 @@ class TripWorkflowTests {
         assertEquals(0, queue.count());
         driver.browser.post("/driver/queue/join", Map.of(), 409);
     }
+
+    @Test void notificationsArePrivateCsrfProtectedAndIdempotent() throws Exception {
+        var p = session(Account.Role.PASSENGER); var stranger = session(Account.Role.PASSENGER);
+        var driver = session(Account.Role.DRIVER); var admin = session(Account.Role.ADMIN);
+        driver.browser.post("/driver/queue/join", Map.of(), 200);
+        var ride = book(p, quote(p, false, "REGULAR"), false); long id = ride.get("id").asLong();
+        var inbox = p.browser.get("/notifications"); assertEquals(2, inbox.get("unreadCount").asInt());
+        long notificationId = inbox.get("items").get(0).get("id").asLong();
+        assertEquals(0, stranger.browser.get("/notifications").get("unreadCount").asInt());
+        stranger.browser.post("/notifications/" + notificationId + "/read", Map.of(), 404);
+        assertEquals(401, new Browser().send("GET", "/notifications", null, false).statusCode());
+        assertEquals(403, p.browser.send("POST", "/notifications/" + notificationId + "/read", "{}", false).statusCode());
+        p.browser.post("/notifications/" + notificationId + "/read", Map.of(), 200);
+        assertEquals(1, p.browser.get("/notifications").get("unreadCount").asInt());
+        action(driver, id, "accept"); long count = p.browser.get("/notifications").get("items").size();
+        action(driver, id, "accept"); assertEquals(count, p.browser.get("/notifications").get("items").size());
+        action(p, id, "cancel");
+        assertEquals("Trip cancelled", driver.browser.get("/notifications").get("items").get(0).get("title").asText());
+        assertEquals("Trip cancelled", admin.browser.get("/notifications").get("items").get(0).get("title").asText());
+        assertEquals(204, p.browser.send("POST", "/notifications/read-all", "{}", true).statusCode());
+        assertEquals(0, p.browser.get("/notifications").get("unreadCount").asInt());
+    }
 }

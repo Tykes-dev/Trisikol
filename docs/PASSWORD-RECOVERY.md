@@ -1,6 +1,7 @@
 # Local-demo password recovery
 
-Branch: `codex/password-recovery`. Based on GitHub main at `6795dc2`.
+Branch: `codex/password-recovery`. Originally branched from main at `6795dc2`,
+now updated with main at `5a9fcfe` to retain notifications and multiple TODAs.
 
 ## Local-demo password recovery
 
@@ -40,12 +41,15 @@ local-demo delivery is not claimed production-ready.
 
 ## Branch checks
 
-This branch contains 30 backend tests. Run `mvnw.cmd package` in the backend,
+This combined branch contains 34 backend tests; the original standalone recovery
+snapshot contained 30. Run `mvnw.cmd package` in the backend,
 and frontend lint/build plus `node --test src/services/routing.test.js`.
-The other two new features are deliberately excluded. The shared TestApi helper,
+Main's notification and TODA features are retained. The shared TestApi helper,
 where present, is test-only infrastructure, not a production feature.
 
-Use an isolated checkout/database for branch testing. Do not run this feature-only
-schema against the regular database already migrated with all three features.
-Do not delete/reset the regular database to switch branches. Keep the local
-integration branch for the combined preview. Physical-phone and MySQL checks remain pending.
+Use isolated accounts/databases for recovery testing. This updated branch retains
+all migrations V1–V6; older feature-only snapshots deliberately omit unrelated
+migrations and must not be pointed at a database already migrated with all three
+features. Do not delete/reset the regular database to switch branches. The local
+integration branch still preserves the combined preview. Physical-phone, final
+manual reset-form submission and MySQL checks remain pending.

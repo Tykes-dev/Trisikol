@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 
-export default function useFareQuote(pickup, dropoff, category, walkIn = false, generation = 0) {
-  const key = pickup && dropoff ? JSON.stringify({ input: { pickup, dropoff, category }, generation, walkIn }) : null;
+export default function useFareQuote(pickup, dropoff, category, walkIn = false, generation = 0, terminalId = 1) {
+  const key = pickup && dropoff ? JSON.stringify({ input: { pickup, dropoff, category, terminalId }, generation, walkIn }) : null;
   const [result, setResult] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const [now, setNow] = useState(Date.now);

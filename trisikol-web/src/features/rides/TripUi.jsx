@@ -9,16 +9,18 @@ function MapEvents({ onSelect }) {
   useMapEvents({ click: (event) => onSelect?.({ lat: event.latlng.lat, lng: event.latlng.lng }) });
   return null;
 }
-function Camera({ positions, bottomInset = 0 }) {
+function Camera({ positions, pickup, bottomInset = 0 }) {
   const map = useMap();
+  const key = JSON.stringify(positions?.length > 1 ? positions : pickup ? [[pickup.lat, pickup.lng], [pickup.lat, pickup.lng]] : null);
   useEffect(() => {
-    if (positions?.length > 1) {
+    const points = JSON.parse(key);
+    if (points) {
       const height = map.getSize().y;
       const topPadding = bottomInset ? Math.min(110, Math.max(35, height - bottomInset - 80)) : 35;
-      map.fitBounds(positions, { paddingTopLeft: [35, topPadding],
+      map.fitBounds(points, { paddingTopLeft: [35, topPadding],
         paddingBottomRight: [35, Math.min(bottomInset + 35, height - topPadding - 40)], maxZoom: 16 });
     }
-  }, [map, positions, bottomInset]);
+  }, [map, key, bottomInset]);
   return null;
 }
 function SelectedPin({ selected, setPickup, setDropoff }) {
@@ -34,7 +36,7 @@ function SelectedPin({ selected, setPickup, setDropoff }) {
 }
 export function TripMap({ pickup, dropoff, positions, onSelect, selected, setPickup, setDropoff, presentation = 'standard', bottomInset = 0 }) {
   return <MapContainer center={[15.2155, 120.5487]} zoom={14} className="trip-map" zoomControl={presentation !== 'fullscreen'} attributionControl={false}>
-    <MapTiles /><MapEvents onSelect={onSelect} /><Camera positions={positions} bottomInset={bottomInset} />
+    <MapTiles /><MapEvents onSelect={onSelect} /><Camera positions={positions} pickup={pickup} bottomInset={bottomInset} />
     {positions?.length > 1 && <Polyline positions={positions} pathOptions={{ color: '#5C1A1A', weight: 5 }} />}
     {pickup && <CircleMarker center={[pickup.lat, pickup.lng]} radius={8} pathOptions={{ color: '#381414' }}><Popup>Pickup</Popup></CircleMarker>}
     {dropoff && <CircleMarker center={[dropoff.lat, dropoff.lng]} radius={8} pathOptions={{ color: '#A84444' }}><Popup>Drop-off</Popup></CircleMarker>}
@@ -52,6 +54,7 @@ export function Category({ value, onChange, disabled }) {
 }
 export function FareBreakdown({ fare }) {
   return <div className="fare-breakdown">
+    {fare.terminalName && <div><span>TODA / terminal</span><strong>{fare.terminalName}</strong></div>}
     <div><span>Road distance</span><strong>{Number(fare.distanceKm).toFixed(3)} km</strong></div>
     <div><span>Matrix fare</span><strong>{money(fare.rawFare)}</strong></div>
     {Number(fare.discountAmount) > 0 && <div><span>Demo discount</span><strong>−{money(fare.discountAmount)}</strong></div>}
