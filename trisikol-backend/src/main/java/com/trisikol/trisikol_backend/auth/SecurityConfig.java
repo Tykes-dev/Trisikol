@@ -16,15 +16,14 @@ public class SecurityConfig {
     @Bean PasswordEncoder passwords() { return new BCryptPasswordEncoder(12); }
     @Bean UserDetailsService users(AccountRepository accounts) {
         return mobile -> accounts.findByMobile(mobile)
-            .map(account -> User.withUsername(account.getMobile()).password(account.getPasswordHash())
-                .roles(account.getRole().name()).build())
+            .map(AccountPrincipal::new)
             .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
     }
-    @Bean SecurityFilterChain security(HttpSecurity http) throws Exception {
+    @Bean SecurityFilterChain security(HttpSecurity http, AccountRepository accounts) throws Exception {
         // Default session CSRF protection remains enabled, including login and logout.
         http.authorizeHttpRequests(auth -> auth
-            .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/auth/csrf", "/api/auth/recovery-info").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/api/driver/**").hasRole("DRIVER")
             .requestMatchers("/api/passenger/**").hasRole("PASSENGER")
@@ -52,6 +51,7 @@ public class SecurityConfig {
                     response.getWriter().write("{\"message\":\"This action is not allowed.\"}");
                 }))
             .addFilterBefore(new AuthRateLimitFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new CredentialVersionFilter(accounts), AuthorizationFilter.class)
             .addFilterAfter(new QuoteRateLimitFilter(), AuthorizationFilter.class);
         return http.build();
     }

@@ -10,6 +10,9 @@ server:
       cookie:
         secure: false
 trisikol:
+  recovery:
+    # PRIVATE local outbox, not SMS. Use synthetic accounts; never enable for deployment.
+    local-outbox: true
   dispatch:
     # Local portfolio mode: queue joins do not claim verified physical presence.
     require-location: ${DISPATCH_REQUIRE_LOCATION:false}

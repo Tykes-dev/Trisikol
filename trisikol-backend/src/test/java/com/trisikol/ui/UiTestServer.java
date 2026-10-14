@@ -19,6 +19,7 @@ public class UiTestServer {
                 "--spring.datasource.username=sa", "--spring.datasource.password=",
                 "--spring.jpa.hibernate.ddl-auto=validate", "--server.servlet.session.cookie.secure=false",
                 "--trisikol.dispatch.require-location=false",
+                "--trisikol.recovery.local-outbox=true", "--trisikol.recovery.outbox-path=data/ui-tests/password-reset-outbox",
                 "--TRISIKOL_ADMIN_MOBILE=", "--TRISIKOL_ADMIN_PASSWORD=");
     }
 

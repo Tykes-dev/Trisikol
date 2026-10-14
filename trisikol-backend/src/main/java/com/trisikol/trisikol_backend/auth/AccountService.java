@@ -32,7 +32,8 @@ public class AccountService {
         if (name == null || name.isBlank() || name.strip().length() > 100) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use a name of 1–100 characters.");
         }
-        var account = current(mobile); account.rename(name.strip());
+        var account = accounts.lockByMobile(mobile).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        account.rename(name.strip());
         return View.of(accounts.saveAndFlush(account));
     }
     public record View(Long id, String name, String mobile, Account.Role role) {

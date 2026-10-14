@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 
-export default function InputField({ label, icon, type, placeholder, value, onChange }) {
+export default function InputField({ label, icon, type, placeholder, value, onChange, autoComplete, required, minLength, maxLength }) {
   const [focused, setFocused] = useState(false);
   const id = useId();
 
@@ -36,6 +36,10 @@ export default function InputField({ label, icon, type, placeholder, value, onCh
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        autoComplete={autoComplete}
+        required={required}
+        minLength={minLength}
+        maxLength={maxLength}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={{

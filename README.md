@@ -24,8 +24,9 @@ The current milestone is a tested **multi-terminal cash-trip portfolio flow**:
 - Mobile manifest and a tested public offline fallback; physical-device installation still needs verification.
 - Saved account-private ride notifications, with read/unread actions.
 - Manual TODA selection, separate queues/fare policies and driver assignment.
+- Local-demo password recovery: expiring one-use codes and old-session revocation. Delivery uses a private local outbox, not SMS.
 
-Verification: 26 backend tests, five frontend routing-helper tests, frontend
+Verification: 34 backend tests, five frontend routing-helper tests, frontend
 lint/build and backend packaging passed. Browser checks covered admin setup,
 passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
 profile editing, repeat bookings, persisted cash records after restart, and the
@@ -35,7 +36,7 @@ This is a portfolio milestone, not a production transport release.
 
 Prices, discount handling, dispatch timeouts and location thresholds are portfolio
 placeholders, not an approved LGU/TODA operating policy. Electronic payments,
-fee remittance, verified discounts, SMS recovery, nearest-TODA/service-area matching and public
+fee remittance, verified discounts, production SMS recovery, background push, nearest-TODA/service-area matching and public
 deployment remain unfinished. Local H2 development has been exercised; MySQL and
 physical-device behavior still need validation.
 
@@ -63,11 +64,11 @@ Local database files, environment secrets, backups, private keys, business
 documents and local tool settings are excluded from version control. Supply your
 own local configuration; never place private credentials in frontend `VITE_*` values.
 
-## Feature branch: Multiple TODAs and terminal queues
+## Feature branch: Local-demo password recovery
 
-This branch adds multiple TODAs on top of main, which now includes saved ride
-notifications. Both features are retained. Password recovery remains in its
-separate branch and is not included here.
+This branch adds local-demo password recovery on top of main, which now includes
+saved ride notifications and multiple TODAs. All three features are retained.
 
-See [TODA implementation, tests and limitations](docs/MULTIPLE-TODAS.md) and
+See [recovery implementation, tests and limitations](docs/PASSWORD-RECOVERY.md),
+[TODA behavior](docs/MULTIPLE-TODAS.md) and
 [saved notification behavior](docs/RIDE-NOTIFICATIONS.md).

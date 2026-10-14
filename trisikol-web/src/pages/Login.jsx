@@ -12,6 +12,8 @@ export default function Login() {
   const [authMode, setAuthMode] = useState('login');
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [recoveryInfo, setRecoveryInfo] = useState(null);
   const navigate = useNavigate();
   const { user, loading, signIn } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -42,9 +44,31 @@ export default function Login() {
     finally { setBusy(false); }
   };
 
-  const handleForgotPassword = (e) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
-    setMessage('Password recovery is not available yet. No SMS has been sent.');
+    if (busy) return;
+    setBusy(true); setMessage('');
+    try {
+      const response = await api('/auth/forgot-password', { method: 'POST', body: { mobile: normalizedMobile() } });
+      setMessage(response.message); setAuthMode('reset'); setPassword(''); setConfirmPassword(''); setResetCode('');
+    } catch (error) { setMessage(error.message); }
+    finally { setBusy(false); }
+  };
+  const openRecovery = async () => {
+    resetForm(); setAuthMode('forgot'); setRecoveryInfo(null);
+    try { setRecoveryInfo(await api('/auth/recovery-info')); }
+    catch (error) { setMessage(error.message); }
+  };
+  const handleResetPassword = async (e) => {
+    e.preventDefault(); if (busy) return;
+    if (password !== confirmPassword) { setMessage('Passwords do not match.'); return; }
+    setBusy(true); setMessage('');
+    try {
+      await api('/auth/reset-password', { method: 'POST', body: { token: resetCode.trim(), password } });
+      setPassword(''); setConfirmPassword(''); setResetCode(''); setAuthMode('login');
+      setMessage('Password changed. Previous sessions have been revoked. Sign in with your new password.');
+    } catch (error) { setMessage(error.message); }
+    finally { setBusy(false); }
   };
 
   const resetForm = () => {
@@ -53,6 +77,7 @@ export default function Login() {
     setName('');
     setConfirmPassword('');
     setMessage('');
+    setResetCode('');
   };
 
   if (loading) return <p role="status">Checking your session…</p>;
@@ -127,7 +152,7 @@ export default function Login() {
         <div style={{ padding:'24px 32px 32px', background:'var(--color-brand-light)' }}>
           {message && <p role="status" style={{ color: '#5C1A1A', fontSize: '13px' }}>{message}</p>}
           <p style={{ fontSize:'13px', fontWeight:600, color:'rgba(56,20,20,0.45)', margin:'0 0 20px', letterSpacing:'0.04em' }}>
-            {authMode === 'signup' ? 'Create your account' : authMode === 'forgot' ? 'Recover your account' : 'Sign in to your account'}
+            {authMode === 'signup' ? 'Create your account' : ['forgot', 'reset'].includes(authMode) ? 'Recover your account' : 'Sign in to your account'}
           </p>
 
           {authMode === 'signup' ? (
@@ -177,7 +202,7 @@ export default function Login() {
             <form onSubmit={handleForgotPassword}>
               <div style={{ background:'rgba(187,162,136,0.12)', border:'1px solid rgba(187,162,136,0.35)', borderRadius:'14px', padding:'14px', marginBottom:'18px' }}>
                 <p style={{ margin:0, color:'rgba(56,20,20,0.65)', fontSize:'13px', lineHeight:1.5 }}>
-                  Automated password recovery is not connected yet.
+                  {recoveryInfo?.available ? 'Local testing only: codes are written to the private backend data/password-reset-outbox folder. No SMS is sent. Use synthetic accounts only.' : recoveryInfo ? 'Recovery delivery is not configured. Contact the operator; no SMS will be sent.' : 'Checking recovery availability…'}
                 </p>
               </div>
 
@@ -190,12 +215,23 @@ export default function Login() {
                 onChange={(e) => setMobile(e.target.value)}
               />
 
-              <Button type="submit">Send Reset Instructions</Button>
+              <Button type="submit" disabled={busy || !recoveryInfo?.available}>{busy ? 'Requesting code…' : 'Request Reset Code'}</Button>
+              <button type="button" disabled={busy} onClick={() => { setAuthMode('reset'); setMessage(''); }}>I already have a reset code</button>
 
               <p style={{ textAlign:'center', fontSize:'13px', color:'rgba(56,20,20,0.4)', marginTop:'20px' }}>
                 Remembered your password?{' '}
                 <span onClick={() => { setAuthMode('login'); resetForm(); }} style={{ color:'var(--color-brand-dark)', textDecoration:'none', fontWeight:700, cursor:'pointer' }}>Back to login</span>
               </p>
+            </form>
+          ) : authMode === 'reset' ? (
+            <form onSubmit={handleResetPassword}>
+              <p style={{ fontSize: '13px' }}>Enter your one-use code within 15 minutes. Requesting another code invalidates the previous one. No SMS is connected in the local demo.</p>
+              <InputField label="Reset code" type="password" autoComplete="off" required placeholder="Paste the private reset code" value={resetCode} onChange={(e) => setResetCode(e.target.value)} />
+              <InputField label="New password" type="password" autoComplete="new-password" required minLength={12} placeholder="At least 12 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <InputField label="Confirm new password" type="password" autoComplete="new-password" required minLength={12} placeholder="Confirm your new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <Button type="submit" disabled={busy || !resetCode || !password}>{busy ? 'Resetting password…' : 'Reset Password'}</Button>
+              <button type="button" disabled={busy} onClick={openRecovery}>Request another code</button>
+              <button type="button" disabled={busy} onClick={() => { setAuthMode('login'); resetForm(); }}>Back to login</button>
             </form>
           ) : (
             <form onSubmit={handleLogin}>
@@ -217,9 +253,9 @@ export default function Login() {
               />
 
               <div style={{ textAlign:'right', marginTop:'-8px', marginBottom:'4px' }}>
-                <span onClick={() => { setAuthMode('forgot'); resetForm(); }} style={{ fontSize:'12px', color:'var(--color-brand-dark)', opacity:0.55, textDecoration:'none', cursor:'pointer' }}>
+                <button type="button" onClick={openRecovery} disabled={busy} style={{ fontSize:'12px', color:'var(--color-brand-dark)', opacity:0.7, textDecoration:'none', cursor:'pointer', border: 0, background: 'none' }}>
                   Forgot password?
-                </span>
+                </button>
               </div>
 
               <Button type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Log In'}</Button>
