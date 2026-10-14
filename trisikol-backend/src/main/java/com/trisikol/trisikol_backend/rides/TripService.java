@@ -1,6 +1,7 @@
 package com.trisikol.trisikol_backend.rides;
 
 import com.trisikol.trisikol_backend.auth.*;
+import com.trisikol.trisikol_backend.notifications.NotificationService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
@@ -24,14 +25,15 @@ public class TripService {
     private final EventRepository events;
     private final CashRepository cash;
     private final AccountRepository accounts;
+    private final NotificationService notifications;
     private final boolean requireLocation;
     public TripService(TerminalRepository terminals, DriverProfileRepository profiles, QueueRepository queue,
             RideRepository rides, QuoteRepository quotes, QuoteService prices, EventRepository events,
-            CashRepository cash, AccountRepository accounts,
+            CashRepository cash, AccountRepository accounts, NotificationService notifications,
             @Value("${trisikol.dispatch.require-location:true}") boolean requireLocation) {
         this.terminals = terminals; this.profiles = profiles; this.queue = queue; this.rides = rides;
         this.quotes = quotes; this.prices = prices; this.events = events; this.cash = cash;
-        this.accounts = accounts; this.requireLocation = requireLocation;
+        this.accounts = accounts; this.notifications = notifications; this.requireLocation = requireLocation;
     }
     public record Person(Long id, String name) {}
     public record View(Long id, String status, Person passenger, Person driver, QuoteService.View fare,
@@ -132,7 +134,7 @@ public class TripService {
         ride.passengerId = walkIn ? null : owner.getId(); ride.driverId = walkIn ? owner.getId() : null;
         ride.status = walkIn ? "ACCEPTED" : "REQUESTED";
         ride.createdAt = Instant.now(); ride.updatedAt = ride.createdAt;
-        rides.saveAndFlush(ride); events.save(new RideEvent(ride, owner.getMobile())); dispatch();
+        rides.saveAndFlush(ride); recordEvent(ride, owner.getMobile(), null); dispatch();
         return view(ride);
     }
     public List<View> passengerRides(Account passenger) {
@@ -161,7 +163,8 @@ public class TripService {
                     require(ride, "OFFERED"); change(ride, "ACCEPTED", actor.getMobile());
                 }
                 case "decline" -> {
-                    require(ride, "OFFERED"); ride.driverId = null; change(ride, "REQUESTED", actor.getMobile());
+                    require(ride, "OFFERED"); var previousDriver = ride.driverId;
+                    ride.driverId = null; change(ride, "REQUESTED", actor.getMobile(), previousDriver);
                 }
                 case "start" -> {
                     if (ride.status.equals("IN_PROGRESS")) return view(ride);
@@ -206,7 +209,8 @@ public class TripService {
             if (List.of("REQUESTED", "OFFERED").contains(ride.status) && ride.createdAt.plusSeconds(900).isBefore(now)) {
                 change(ride, "CANCELLED", "SYSTEM_TIMEOUT");
             } else if (ride.status.equals("OFFERED") && ride.offerExpiresAt != null && !ride.offerExpiresAt.isAfter(now)) {
-                ride.driverId = null; change(ride, "REQUESTED", "SYSTEM_OFFER_EXPIRED");
+                var previousDriver = ride.driverId;
+                ride.driverId = null; change(ride, "REQUESTED", "SYSTEM_OFFER_EXPIRED", previousDriver);
             }
         }
         dispatch();
@@ -223,8 +227,30 @@ public class TripService {
         }
     }
     private void change(Ride ride, String status, String actor) {
+        change(ride, status, actor, null);
+    }
+    private void change(Ride ride, String status, String actor, Long previousDriver) {
         ride.status = status; ride.updatedAt = Instant.now(); ride.offerExpiresAt = null;
-        rides.saveAndFlush(ride); events.save(new RideEvent(ride, actor));
+        rides.saveAndFlush(ride); recordEvent(ride, actor, previousDriver);
+    }
+    private void recordEvent(Ride ride, String actor, Long previousDriver) {
+        var event = events.saveAndFlush(new RideEvent(ride, actor));
+        String title = switch (ride.status) {
+            case "OFFERED" -> "New ride offer";
+            case "ACCEPTED" -> "Ride accepted";
+            case "IN_PROGRESS" -> "Trip started";
+            case "COMPLETED" -> "Trip completed";
+            case "CANCELLED" -> "Trip cancelled";
+            default -> "Waiting for a driver";
+        };
+        var recipients = new LinkedHashSet<Long>();
+        if (ride.passengerId != null) recipients.add(ride.passengerId);
+        if (ride.driverId != null) recipients.add(ride.driverId);
+        accounts.findByRoleOrderByIdAsc(Account.Role.ADMIN).forEach(a -> recipients.add(a.getId()));
+        for (var recipient : recipients) notifications.record(recipient, ride.id, event.getId(), title,
+                "Trip #" + ride.id + ": " + title.toLowerCase(Locale.ROOT) + ". Open your trips for details.", event.getOccurredAt());
+        if (previousDriver != null && !recipients.contains(previousDriver)) notifications.record(previousDriver,
+                ride.id, event.getId(), "Ride offer ended", "Your offer for trip #" + ride.id + " is no longer active.", event.getOccurredAt());
     }
     private View view(Ride ride) {
         return new View(ride.id, ride.status, person(ride.passengerId), person(ride.driverId),

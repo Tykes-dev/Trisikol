@@ -9,9 +9,12 @@ import { TripMap, Category, QuoteStatus, RideCard } from '../features/rides/Trip
 import { money } from '../features/rides/format';
 import '../features/rides/trips.css';
 import ProfileEditor from '../features/auth/ProfileEditor';
+import useNotifications from '../features/notifications/useNotifications';
+import NotificationInbox from '../features/notifications/NotificationInbox';
 
 export default function DriverTerminal() {
   const { user } = useAuth(); const logout = useLogout();
+  const notifications = useNotifications();
   const [tab, setTab] = useState('Terminal');
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const [walkIn, setWalkIn] = useState(false); const [dropoff, setDropoff] = useState(null);
@@ -52,7 +55,7 @@ export default function DriverTerminal() {
     : active.status === 'ACCEPTED' ? ['start', 'cancel'] : ['complete'];
   return <div className="workspace-shell">
     <header className="workspace-header"><div><h1>TrisiKol Driver</h1><small>{user.name} · {terminal?.name || 'Terminal'}</small></div><button onClick={logout}>Log out</button></header>
-    <nav className="workspace-tabs" aria-label="Driver navigation">{['Terminal', 'History', 'Earnings', 'Vehicle', 'Profile'].map((name) => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => setTab(name)}>{name}</button>)}</nav>
+    <nav className="workspace-tabs" aria-label="Driver navigation">{['Terminal', 'History', 'Earnings', 'Vehicle', 'Profile', 'Notifications'].map((name) => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => setTab(name)}>{name}{name === 'Notifications' && ` (${notifications.inbox?.unreadCount || 0})`}</button>)}</nav>
     <main className="workspace-main">
       {(error || result.error) && <div className="workspace-alert" role="alert">{error || result.error} <button onClick={result.refresh}>Refresh</button></div>}
       {!state && !result.error && <p>Loading driver state…</p>}
@@ -77,6 +80,7 @@ export default function DriverTerminal() {
         {state.ledger.map((entry) => <section className="workspace-card" key={entry.rideId}>Trip #{entry.rideId} · {new Date(entry.recordedAt).toLocaleString()}<p>Cash {money(entry.cashCollected)} · Net {money(entry.driverNet)} · Platform due {money(entry.platformDue)}</p></section>)}</>}
       {tab === 'Vehicle' && state && <section className="workspace-card"><h2>Your vehicle</h2><p>{state.vehicle.enabled ? 'Enabled' : 'Suspended'}</p><p>Body: {state.vehicle.bodyNumber || 'Not registered'}</p><p>Plate: {state.vehicle.plateNumber || 'Not registered'}</p><p>Model: {state.vehicle.vehicleModel || 'Not registered'}</p><small>Contact your administrator to update these details.</small></section>}
       {tab === 'Profile' && <ProfileEditor />}
+      {tab === 'Notifications' && <NotificationInbox result={notifications} />}
     </main>
   </div>;
 }
