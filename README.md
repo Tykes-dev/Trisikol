@@ -23,7 +23,7 @@ The current milestone is a tested **single-terminal cash-trip portfolio flow**:
 - Connected passenger, driver and administrator screens; vehicle registration and profile-name editing.
 - Mobile manifest and a tested public offline fallback; physical-device installation still needs verification.
 
-Verification: 22 backend tests, five frontend routing-helper tests, frontend
+Verification: 30 backend tests, five frontend routing-helper tests, frontend
 lint/build and backend packaging passed. Browser checks covered admin setup,
 passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
 profile editing, repeat bookings, persisted cash records after restart, and the
@@ -60,3 +60,8 @@ Open http://127.0.0.1:5174/login and create a passenger account. Local developme
 Local database files, environment secrets, backups, private keys, business
 documents and local tool settings are excluded from version control. Supply your
 own local configuration; never place private credentials in frontend `VITE_*` values.
+
+## Feature branch: Local-demo password recovery
+
+This branch contains only this new feature, on top of the existing main application.
+See [implementation, tests and limitations](docs/PASSWORD-RECOVERY.md). Other new features live in separate branches.

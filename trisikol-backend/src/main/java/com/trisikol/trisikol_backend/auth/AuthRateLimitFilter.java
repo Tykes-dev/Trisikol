@@ -25,7 +25,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
         throws ServletException, IOException {
         if ("POST".equals(request.getMethod()) &&
-            ("/api/auth/login".equals(request.getServletPath()) || "/api/auth/register".equals(request.getServletPath())) &&
+            java.util.Set.of("/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/reset-password").contains(request.getServletPath()) &&
             !allowed(request.getRemoteAddr())) {
             response.setStatus(429); response.setHeader("Retry-After", "900");
             response.setContentType("application/json");
