@@ -69,13 +69,14 @@ Local database files, environment secrets, backups, private keys, business
 documents and local tool settings are excluded from version control. Supply your
 own local configuration; never place private credentials in frontend `VITE_*` values.
 
-## Local feature branches
+## Feature delivery branch
 
-Current branch `codex/admin-analytics-reports` is stacked on
-`codex/trip-receipts`, `codex/driver-mobile-ui`,
-`codex/nearby-toda-suggestions` and `codex/admin-mobile-ui`.
-Merge the admin-UI branch first, then nearby suggestions, driver UI, receipts,
-and analytics/reports. These local branches have not been pushed.
+The combined delivery branch `codex/driver-receipts-reports` contains the
+admin mobile UI, nearby TODA suggestions, driver mobile UI, trip receipts and
+admin analytics/reporting commits, preserving their original history.
+The individual feature branches remain available locally. Merging the combined
+pull request incorporates all five features; separate merges of its constituent
+branches are not needed. Check GitHub for the pull request's current status.
 
 Saved notifications, multiple TODAs, local-demo recovery and the current trip
 flow are retained. Proximity is not coverage approval or fare distance. Reports

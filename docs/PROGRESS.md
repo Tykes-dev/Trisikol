@@ -1,10 +1,12 @@
 # Development progress
 
-Updated: 2026-10-15. Current local branch: `codex/admin-analytics-reports`, built
-on `codex/trip-receipts`, `codex/driver-mobile-ui`, `codex/nearby-toda-suggestions`
-and `codex/admin-mobile-ui`, in that dependency order. These five local feature
-branches are not pushed yet. Main already contains the notifications, multiple-TODA, and
-local-demo recovery features. This remains a cash-trip portfolio project, not a
+Updated: 2026-10-15. Combined delivery branch: `codex/driver-receipts-reports`,
+containing the admin UI, nearby TODA suggestions, driver UI, receipts and admin
+analytics/reporting feature commits. Individual local branches are retained;
+the combined pull request delivers all five without separate constituent merges.
+Check GitHub for current publication and merge status. Notifications,
+multiple-TODA and local-demo recovery features are retained.
+This remains a cash-trip portfolio project, not a
 production transport service or native mobile build.
 
 ## Implemented
