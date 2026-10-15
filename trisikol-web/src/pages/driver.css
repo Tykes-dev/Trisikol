@@ -1,0 +1,71 @@
+.driver-shell { background: #f8f2ec; font: 14px/1.6 system-ui, sans-serif; color: #381414; min-height: 100dvh; }
+.driver-shell *, .driver-shell *::before, .driver-shell *::after { box-sizing: border-box; }
+.driver-shell h1, .driver-shell h2, .driver-shell h3, .driver-shell p { overflow-wrap: anywhere; }
+.driver-header { background: #381414; color: white; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: calc(16px + env(safe-area-inset-top, 0px)) 24px 16px; }
+.driver-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.driver-brand img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #bba288; }
+.driver-brand > div { min-width: 0; }
+.driver-brand strong { font-size: 20px; }
+.driver-brand strong > span { font-weight: 450; color: #dfc6ac; font-size: 13px; }
+.driver-brand small { display: block; color: #e0c7b0; font-size: 11px; overflow-wrap: anywhere; }
+.driver-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.driver-header-actions > button { position: relative; width: 46px; height: 46px; border: 0; border-radius: 50%; background: #ffffff12; color: white; display: grid; place-items: center; cursor: pointer; }
+.driver-unread { position: absolute; top: 0; right: -3px; padding: 0 4px; background: #f1d2a5; color: #381414; border-radius: 10px; font: 700 10px/18px system-ui, sans-serif; min-width: 18px; }
+.driver-main { max-width: 1200px; margin: auto; padding: 24px 24px 120px; }
+.driver-page-heading { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.driver-eyebrow { margin: 0 0 4px; font-size: 11px; font-weight: 650; letter-spacing: .6px; color: #866950; }
+.driver-page-heading h1 { font-size: 26px; margin: 0; line-height: 1.2; }
+.driver-status { background: #e9f3eb; color: #24643c; border-radius: 8px; padding: 6px 10px; font-size: 11px; font-weight: 650; text-align: center; overflow-wrap: anywhere; }
+.driver-status--warning { background: #faece9; color: #963831; }
+.driver-card { background: white; border: 1px solid #e8dace; border-radius: 16px; padding: 22px; margin-bottom: 18px; min-width: 0; }
+.driver-card h2 { font-size: 19px; margin: 0 0 8px; }
+.driver-card h3 { font-size: 17px; margin: 0 0 8px; }
+.driver-terminal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
+.driver-map-card { min-width: 0; background: white; border: 1px solid #e8dace; border-radius: 16px; overflow: hidden; margin-bottom: 18px; }
+.driver-map-card .trip-map { border-radius: 0; height: 430px; }
+.driver-map-card > p { color: #756154; font-size: 12px; margin: 0; padding: 10px 14px; }
+.driver-queue-number { font-size: 32px; font-weight: 800; line-height: 1.2; letter-spacing: -.7px; }
+.driver-muted { color: #756154; font-size: 12px; }
+.driver-route { font-weight: 650; font-size: 16px; }
+.driver-cash-total { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 14px; margin: 16px 0; background: #f8f0e7; border-radius: 12px; }
+.driver-cash-total span { color: #756154; font-size: 12px; }
+.driver-cash-total strong { font-size: 26px; }
+.driver-button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border: 1px solid #4d1a1a; border-radius: 10px; padding: 12px 16px; background: #4d1a1a; color: white; font: 650 14px/1.4 system-ui, sans-serif; cursor: pointer; max-width: 100%; }
+.driver-button--secondary { background: white; color: #4d1a1a; border-color: #d7bfaa; }
+.driver-shell button:disabled { opacity: .55; cursor: not-allowed; }
+.driver-action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 16px 0; }
+.driver-note { color: #674b35; background: #f3e8dc; padding: 12px 14px; border-radius: 9px; font-size: 12px; }
+.driver-alert { color: #963831; background: #fbecea; border: 1px solid #edc9c2; border-radius: 10px; padding: 12px; margin-bottom: 16px; overflow-wrap: anywhere; }
+.driver-alert .driver-button { display: flex; margin-top: 10px; }
+.driver-walk-in { padding-top: 16px; border-top: 1px solid #e8dace; }
+.driver-walk-in > .driver-button { width: 100%; }
+.driver-details { border-top: 1px solid #e8dace; padding-top: 8px; margin-top: 18px; }
+.driver-details summary { min-height: 44px; padding: 10px 0; font-weight: 650; cursor: pointer; }
+.driver-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.driver-metric { background: white; border: 1px solid #e8dace; border-radius: 12px; padding: 16px; min-width: 0; }
+.driver-metric span { display: block; font-size: 11px; color: #756154; }
+.driver-metric strong { display: block; font-size: 24px; margin-top: 6px; overflow-wrap: anywhere; }
+.driver-filters { display: flex; gap: 14px; flex-wrap: wrap; }
+.driver-filters label { min-width: 0; flex: 1 1 180px; font-size: 12px; font-weight: 600; }
+.driver-filters input, .driver-filters select { display: block; width: 100%; padding: 12px; min-height: 46px; font: inherit; background: white; color: #381414; border: 1px solid #d6bda6; border-radius: 9px; margin-top: 6px; }
+.driver-empty { text-align: center; padding: 32px 18px; }
+.driver-ledger-entry { border-top: 1px solid #e8dace; padding: 16px 0; }
+.driver-ledger-entry .section-title > span { color: #756154; font-size: 11px; }
+.driver-ledger-entry dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 0; }
+.driver-ledger-entry dt, .driver-vehicle-details dt { color: #756154; font-size: 11px; }
+.driver-ledger-entry dd, .driver-vehicle-details dd { margin: 4px 0 0; font-weight: 650; overflow-wrap: anywhere; }
+.driver-vehicle-details > div { padding: 16px 0; border-bottom: 1px solid #e8dace; }
+.driver-navigation { position: fixed; z-index: 10; bottom: 0; left: 0; right: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 6px max(8px, calc((100% - 1120px) / 2)) calc(6px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid #e8dace; background: white; box-shadow: 0 -4px 20px #38141408; }
+.driver-navigation button { display: flex; flex-direction: column; gap: 3px; justify-content: center; align-items: center; min-height: 58px; min-width: 0; border: 0; background: transparent; color: #80675b; border-radius: 9px; font: 650 11px system-ui, sans-serif; cursor: pointer; }
+.driver-navigation button > span:first-child { font-size: 23px; line-height: 25px; }
+.driver-navigation button[aria-current], .driver-navigation button[aria-expanded="true"] { color: #4d1a1a; background: #f5eae0; }
+.driver-more-menu { display: grid; gap: 12px; }
+.driver-more-menu > p { margin: 0 0 10px; }
+.driver-more-menu small { color: #756154; }
+.driver-confirm-amount { font-size: 32px; font-weight: 800; margin: 16px 0; color: #4d1a1a; }
+.driver-skip { position: fixed; top: 8px; left: 8px; z-index: 100; background: white; color: #381414; border-radius: 8px; padding: 12px; transform: translateY(-150%); }
+.driver-skip:focus { transform: translateY(0); }
+.driver-shell :focus-visible { outline: 3px solid #a77d51; outline-offset: 3px; }
+.driver-shell .fare-breakdown > div { gap: 16px; }
+.driver-shell .fare-breakdown strong { min-width: 0; text-align: right; overflow-wrap: anywhere; }
+@media (max-width: 767px) { .driver-header { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; } .driver-brand strong { font-size: 18px; } .driver-brand img { width: 38px; height: 38px; } .driver-header-actions { gap: 5px; } .driver-header-actions > button { width: 44px; height: 44px; } .driver-main { padding: 22px 16px calc(110px + env(safe-area-inset-bottom, 0px)); } .driver-page-heading { align-items: start; } .driver-page-heading h1 { font-size: 24px; } .driver-terminal-layout { grid-template-columns: 1fr; gap: 0; } .driver-card { padding: 18px; } .driver-map-card .trip-map { height: 32dvh; min-height: 230px; } .driver-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .driver-metric { padding: 14px; } .driver-metric strong { font-size: 22px; } .driver-shell input, .driver-shell select, .driver-shell textarea { font-size: 16px; min-height: 46px; } .driver-cash-total strong { font-size: 24px; } .driver-ledger-entry dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } .driver-navigation { padding-left: 4px; padding-right: 4px; } .driver-navigation button { font-size: 10px; } }
