@@ -15,6 +15,6 @@ export default function ProfileEditor() {
   return <section className="workspace-card"><h2>My profile</h2><p>{user.mobile} · {user.role.toLowerCase()}</p>
     <form onSubmit={submit}><label className="field">Name<input required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} /></label>
       {message && <p role="status">{message}</p>}<Button type="submit" disabled={busy}>Save name</Button>
-    </form><p><small>Phone verification and password recovery are not available in this portfolio version.</small></p>
+    </form><p><small>Phone verification and SMS delivery are not connected. The sign-in screen shows whether demo password recovery is available.</small></p>
   </section>;
 }

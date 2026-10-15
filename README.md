@@ -24,9 +24,14 @@ The current milestone is a tested **multi-terminal cash-trip portfolio flow**:
 - Mobile manifest and a tested public offline fallback; physical-device installation still needs verification.
 - Saved account-private ride notifications, with read/unread actions.
 - Manual TODA selection, separate queues/fare policies and driver assignment.
+- Pickup-pin-based nearby TODA suggestions, ranked by approximate straight-line proximity. Selecting a TODA keeps both trip pins and requests a fresh road-route fare quote.
+- Restored demo-style administrator UI with responsive cards, bottom navigation and scrollable dialogs.
+- Driver mobile navigation, action-first trip controls, searchable history and separate earnings/vehicle screens.
+- Private completed-trip cash receipts with HTML download and browser print/PDF controls (not tax invoices).
+- Administrator date/TODA-filtered cash analytics with daily/source/TODA breakdowns and snapshot-consistent analytics/trip CSV exports.
 - Local-demo password recovery: expiring one-use codes and old-session revocation. Delivery uses a private local outbox, not SMS.
 
-Verification: 34 backend tests, five frontend routing-helper tests, frontend
+Verification: 52 backend tests, 27 frontend helper tests, frontend
 lint/build and backend packaging passed. Browser checks covered admin setup,
 passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
 profile editing, repeat bookings, persisted cash records after restart, and the
@@ -36,7 +41,7 @@ This is a portfolio milestone, not a production transport release.
 
 Prices, discount handling, dispatch timeouts and location thresholds are portfolio
 placeholders, not an approved LGU/TODA operating policy. Electronic payments,
-fee remittance, verified discounts, production SMS recovery, background push, nearest-TODA/service-area matching and public
+fee remittance, verified discounts, production SMS recovery, background push, approved service-area matching, live driver tracking and public
 deployment remain unfinished. Local H2 development has been exercised; MySQL and
 physical-device behavior still need validation.
 
@@ -64,11 +69,23 @@ Local database files, environment secrets, backups, private keys, business
 documents and local tool settings are excluded from version control. Supply your
 own local configuration; never place private credentials in frontend `VITE_*` values.
 
-## Feature branch: Local-demo password recovery
+## Feature delivery branch
 
-This branch adds local-demo password recovery on top of main, which now includes
-saved ride notifications and multiple TODAs. All three features are retained.
+The combined delivery branch `codex/driver-receipts-reports` contains the
+admin mobile UI, nearby TODA suggestions, driver mobile UI, trip receipts and
+admin analytics/reporting commits, preserving their original history.
+The individual feature branches remain available locally. Merging the combined
+pull request incorporates all five features; separate merges of its constituent
+branches are not needed. Check GitHub for the pull request's current status.
+
+Saved notifications, multiple TODAs, local-demo recovery and the current trip
+flow are retained. Proximity is not coverage approval or fare distance. Reports
+are saved cash records, not verified payments, revenue settlement or profit.
 
 See [recovery implementation, tests and limitations](docs/PASSWORD-RECOVERY.md),
 [TODA behavior](docs/MULTIPLE-TODAS.md) and
-[saved notification behavior](docs/RIDE-NOTIFICATIONS.md).
+[saved notification behavior](docs/RIDE-NOTIFICATIONS.md). See
+[nearby TODA checks](docs/NEARBY-TODAS.md) and [admin UI checks](docs/ADMIN_UI.md)
+for the earlier local changes. New module guides:
+[driver UI](docs/DRIVER_MOBILE.md), [receipts](docs/TRIP_RECEIPTS.md) and
+[admin analytics/exports](docs/ADMIN_REPORTS.md), including tests and limitations.

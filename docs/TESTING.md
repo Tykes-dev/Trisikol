@@ -41,6 +41,10 @@ This creates only the first admin and does not reset existing credentials.
 | New booking | Book again after completion or cancellation | A fresh quote and distinct trip are created, not the previous trip |
 | Walk-in | First queued driver: Record a walk-in → select drop-off → confirm | Accepted trip; app fee is zero; it shares driver reservation rules with app bookings |
 | Earnings | Open driver Earnings after completion | Cash collected equals net earnings plus platform fees due |
+| Driver phone UI | Use Terminal, Trips, Earnings, Vehicle and More at 320px/390px widths | Actions stay reachable, navigation does not scroll horizontally; confirmation dialogs contain keyboard focus |
+| Cash receipts | Open a completed trip receipt, download HTML, manually try Print / Save PDF | Saved fare/cash values; only owning passenger, assigned driver or admin can read it; not a tax invoice |
+| Analytics | Admin → Analytics & reports (More on phones), choose dates/TODA, Generate report | Manila cash-recorded dates, reconciled totals and daily/source/TODA groups; empty periods are zero |
+| CSV export | Export analytics CSV and trip rows CSV from the same loaded report | Same snapshot timestamp; complete selected rows, cash equals net plus fees; editing filters hides old exports |
 | History/audit | Open passenger/driver History and admin Trips → events | Saved trips and ordered status events are shown |
 | Restart | Stop/restart backend and sign in again | Trips, policies, profiles and ledger persist; sessions require new sign-in |
 | Offline | In a built preview, load and reload once, stop preview server, reload | Public offline message; no booking is confirmed and API data are not cached |
@@ -70,6 +74,8 @@ In the frontend directory:
 ```powershell
 npm run lint
 node --test src/services/routing.test.js
+node --test src/features/admin/adminView.test.js src/features/rides/terminalSuggestions.test.js
+node --test src/features/drivers/driverView.test.js src/features/receipts/receiptFormat.test.js src/features/reports/reportExport.test.js
 npm run build
 ```
 
@@ -78,6 +84,12 @@ competing reservations, offer expiry, idempotent completion, profile CSRF,
 per-account quote limits, suspension, stale quotes and GPS validation. The
 frontend routing-helper tests use mock responses; current fare quotes are
 authoritative backend responses.
+
+For current module-specific checks, see [admin UI](ADMIN_UI.md),
+[nearby TODA suggestions](NEARBY-TODAS.md), [driver mobile UI](DRIVER_MOBILE.md),
+[cash receipts](TRIP_RECEIPTS.md) and [analytics/exports](ADMIN_REPORTS.md).
+The current combined suite has 52 backend tests and 27 frontend helper tests. Historical checks below describe
+their original snapshots rather than replacing the latest module results.
 
 ## Isolated UI tests (no real accounts or external route calls)
 

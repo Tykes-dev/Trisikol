@@ -13,6 +13,7 @@ import './passenger.css';
 import ProfileEditor from '../features/auth/ProfileEditor';
 import useNotifications from '../features/notifications/useNotifications';
 import NotificationInbox from '../features/notifications/NotificationInbox';
+import TerminalSuggestions from '../features/rides/TerminalSuggestions.jsx';
 
 function Icon({ name }) {
   const paths = {
@@ -121,11 +122,12 @@ export default function PassengerHome() {
   const rides = result.data?.['/passenger/rides'] || [];
   const active = rides.find(isActive);
   const quote = useFareQuote(active ? null : pickup, dropoff, category, false, rides[0]?.id || 0, terminalId);
-  function changeTerminal(event) {
-    const next = terminals.find((item) => item.id === Number(event.target.value));
+  function changeTerminal(id) {
+    const next = terminals.find((item) => item.id === Number(id));
     if (!next) return;
-    setTerminalId(next.id); setSelected(null); setDropoff(null); setError('');
-    setPickup({ lat: Number(next.latitude), lng: Number(next.longitude) });
+    // A TODA owns the queue and fare policy; it is not the passenger's pickup location.
+    // useFareQuote invalidates the previous quote when terminalId changes.
+    setTerminalId(next.id); setSelected(null); setError('');
   }
   async function book() {
     if (busy || quote.status !== 'ready') return;
@@ -169,9 +171,10 @@ export default function PassengerHome() {
           {active ? <><RideCard ride={active} busy={busy || !!result.error}
             actions={active.status === 'IN_PROGRESS' ? [] : ['cancel']} onAction={cancel} /><p>Status updates automatically. Pay the displayed cash fare at completion.</p></>
             : <><details className="passenger-options"><summary>TODA · {terminal?.name || 'Choose terminal'}</summary>
-              <label className="field">Booking terminal<select value={terminalId} onChange={changeTerminal} disabled={busy || !result.data || !!result.error}>
+              <label className="field">Booking terminal<select value={terminalId} onChange={(event) => changeTerminal(event.target.value)} disabled={busy || !result.data || !!result.error}>
                 {terminals.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select><small>Choose manually. Nearest-TODA matching and approved service areas are not configured.</small></label>
+              </select><small>Changing TODA keeps your pickup and destination pins and requests a fresh fare quote. Service areas are not verified.</small></label>
+              <TerminalSuggestions pickup={pickup} terminals={terminals} selectedId={terminalId} onSelect={changeTerminal} disabled={busy || !result.data || !!result.error} />
             </details><div className="passenger-location-fields">
               <label><Icon name="map-pin" /><span>Pick-up Location<input readOnly aria-label="Pick-up Location" value={`${pickup.lat.toFixed(5)}, ${pickup.lng.toFixed(5)}`} /></span></label>
               <label><Icon name="flag" /><span>Drop-off Location<input readOnly aria-label="Drop-off Location" placeholder="Tap map to set destination…" value={dropoff ? `${dropoff.lat.toFixed(5)}, ${dropoff.lng.toFixed(5)}` : ''} /></span></label>
