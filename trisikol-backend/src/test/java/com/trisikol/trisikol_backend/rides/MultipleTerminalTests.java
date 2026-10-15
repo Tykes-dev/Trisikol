@@ -23,6 +23,7 @@ class MultipleTerminalTests {
     @Autowired RideRepository rides;
     @Autowired QueueRepository queue;
     @Autowired FarePolicyRepository policies;
+    @Autowired QuoteRepository quotes;
     @Autowired TransactionTemplate transactions;
     static int next = 2000;
     TestApi.Session session(Account.Role role) throws Exception { return TestApi.create(accounts, port, role, String.format("0917%07d", next++)); }
@@ -94,5 +95,44 @@ class MultipleTerminalTests {
         var walk = driver.api().request("POST", "/driver/walk-in-quotes", TestApi.quoteInput(unused), 201);
         assertEquals(0, walk.get("serviceFee").asInt());
         assertEquals("ACCEPTED", driver.api().request("POST", "/driver/walk-ins", Map.of("quoteId", walk.get("quoteId").asText()), 201).get("status").asText());
+    }
+    @Test void nearbySuggestionsRankPersistedTerminalsWithoutCreatingQuotesOrChangingQueues() throws Exception {
+        var admin = session(Account.Role.ADMIN); var passenger = session(Account.Role.PASSENGER);
+        long far = admin.api().request("POST", "/admin/terminals", Map.of("name", "Far discovery " + next++, "latitude", 0, "longitude", 0), 201).get("id").asLong();
+        long near = admin.api().request("POST", "/admin/terminals", Map.of("name", "Near discovery " + next++, "latitude", 15.22, "longitude", 120.56), 201).get("id").asLong();
+        long tied = admin.api().request("POST", "/admin/terminals", Map.of("name", "Tied discovery " + next++, "latitude", 15.22, "longitude", 120.56), 201).get("id").asLong();
+        long quoteCount = quotes.count(), queueCount = queue.count();
+        var result = passenger.api().request("POST", "/passenger/terminal-suggestions", Map.of("pickup", Map.of("lat", 15.22, "lng", 120.56)), 200);
+        assertEquals("STRAIGHT_LINE", result.get("distanceBasis").asText());
+        assertFalse(result.get("coverageVerified").asBoolean());
+        var suggestions = result.get("terminals");
+        assertEquals(near, suggestions.get(0).get("id").asLong());
+        assertEquals(tied, suggestions.get(1).get("id").asLong());
+        assertEquals(0d, suggestions.get(0).get("straightLineDistanceKm").asDouble());
+        double previous = -1;
+        for (var item : suggestions) {
+            assertTrue(item.get("straightLineDistanceKm").asDouble() >= previous);
+            previous = item.get("straightLineDistanceKm").asDouble();
+            assertFalse(item.has("drivers")); assertFalse(item.has("passengers"));
+        }
+        assertEquals(far, suggestions.get(suggestions.size() - 1).get("id").asLong());
+        assertEquals(quoteCount, quotes.count()); assertEquals(queueCount, queue.count());
+        assertEquals(near, passenger.api().request("POST", "/passenger/quotes", TestApi.quoteInput(near), 201).get("terminalId").asLong());
+    }
+    @Test void terminalSuggestionsRequirePassengerCsrfAndValidCoordinates() throws Exception {
+        String path = "/passenger/terminal-suggestions";
+        var input = Map.of("pickup", Map.of("lat", 15.22, "lng", 120.56));
+        new TestApi(port).request("POST", path, input, 401);
+        session(Account.Role.DRIVER).api().request("POST", path, input, 403);
+        session(Account.Role.ADMIN).api().request("POST", path, input, 403);
+        var passenger = session(Account.Role.PASSENGER);
+        assertEquals(403, passenger.api().send("POST", path, "{\"pickup\":{\"lat\":15.22,\"lng\":120.56}}", false).statusCode());
+        passenger.api().request("POST", path, Map.of(), 400);
+        passenger.api().request("POST", path, Map.of("pickup", Map.of("lat", 15.22)), 400);
+        passenger.api().request("POST", path, Map.of("pickup", Map.of("lat", 91, "lng", 0)), 400);
+        passenger.api().request("POST", path, Map.of("pickup", Map.of("lat", 0, "lng", -181)), 400);
+        passenger.api().request("POST", path, Map.of("pickup", Map.of("lat", "invalid", "lng", 0)), 400);
+        var result = passenger.api().request("POST", path, Map.of("pickup", Map.of("lat", 0, "lng", 0)), 200);
+        assertEquals("STRAIGHT_LINE", result.get("distanceBasis").asText());
     }
 }

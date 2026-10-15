@@ -70,6 +70,7 @@ In the frontend directory:
 ```powershell
 npm run lint
 node --test src/services/routing.test.js
+node --test src/features/admin/adminView.test.js src/features/rides/terminalSuggestions.test.js
 npm run build
 ```
 
@@ -78,6 +79,11 @@ competing reservations, offer expiry, idempotent completion, profile CSRF,
 per-account quote limits, suspension, stale quotes and GPS validation. The
 frontend routing-helper tests use mock responses; current fare quotes are
 authoritative backend responses.
+
+For current module-specific checks, see [admin UI](ADMIN_UI.md) and
+[nearby TODA suggestions](NEARBY-TODAS.md). The current combined suite has 41
+backend tests and 14 frontend helper tests. Historical checks below describe
+their original snapshots rather than replacing the latest module results.
 
 ## Isolated UI tests (no real accounts or external route calls)
 
