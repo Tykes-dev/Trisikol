@@ -12,6 +12,7 @@ import { money, statusText } from '../features/rides/format';
 import ProfileEditor from '../features/auth/ProfileEditor';
 import useNotifications from '../features/notifications/useNotifications';
 import NotificationInbox from '../features/notifications/NotificationInbox';
+import AdminReports from '../features/reports/AdminReports';
 import logo from '../assets/trisikol-logo.png';
 import '../features/rides/trips.css';
 import './admin.css';
@@ -22,6 +23,7 @@ const pages = [
   { id: 'Trips', label: 'Ride logs', short: 'Logs', icon: 'trips', description: 'Review the latest 100 trips across all TODAs.' },
   { id: 'Settings', label: 'TODA settings', short: 'Settings', icon: 'settings', description: 'Manage terminal details and traceable fare revisions.' },
   { id: 'Overview', label: 'Overview', icon: 'overview', description: 'Saved operational totals across all TODAs.' },
+  { id: 'Reports', label: 'Analytics & reports', icon: 'overview', description: 'Date-filtered cash-trip analytics and exportable reports.' },
   { id: 'Notifications', label: 'Notifications', icon: 'bell', description: 'Your saved in-app updates and alerts.' },
   { id: 'Profile', label: 'My profile', icon: 'profile', description: 'Manage your administrator profile.' },
 ];
@@ -98,7 +100,7 @@ export default function AdminDashboard() {
     </aside>
     <header className="admin-mobile-header"><div><img src={logo} alt="" /><strong>TrisiKol <span>Admin</span></strong></div><div><button className="admin-icon-button" aria-label={`Notifications, ${unread} unread`} onClick={() => navigate('Notifications')} disabled={mutationBusy}><AdminIcon name="bell" />{unread > 0 && <span className="admin-dot" />}</button><button className="admin-icon-button" aria-label="My profile" onClick={() => navigate('Profile')} disabled={mutationBusy}><AdminIcon name="profile" /></button></div></header>
     <main id="admin-main" className="admin-main" tabIndex={-1}>
-      <header className="admin-page-heading"><div><p className="admin-eyebrow">TODA MANAGEMENT</p><h1>{page.label}</h1><p>{page.description}</p></div><span className="admin-live-label"><span />Updates every 6s</span></header>
+      <header className="admin-page-heading"><div><p className="admin-eyebrow">TODA MANAGEMENT</p><h1>{page.label}</h1><p>{page.description}</p></div><span className="admin-live-label">{tab === 'Reports' ? 'Saved report snapshot' : <><span />Updates every 6s</>}</span></header>
       {['Queue', 'Settings'].includes(tab) && <section className="admin-scope" aria-label="TODA selection"><label htmlFor="admin-terminal"><AdminIcon name="location" /><span>Selected TODA</span></label><select id="admin-terminal" value={terminalId} disabled={mutationBusy || !terminals.length} onChange={(event) => { setTerminalId(Number(event.target.value)); setNotice(''); }}>
         {!terminals.length && <option value={terminalId}>Loading TODAs…</option>}{terminals.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
       </select><p>Queue and settings apply to this TODA. Roster, ride logs and overview cover all TODAs.</p></section>}
@@ -149,6 +151,7 @@ export default function AdminDashboard() {
         {[['Trips', summary.rides, 'trips'], ['Completed', summary.completed, 'check'], ['Queued drivers', summary.queuedDrivers, 'queue'], ['Cash collected', money(summary.cashCollected), 'cash'], ['Driver net earnings', money(summary.driverNet), 'drivers'], ['Platform fees due', money(summary.platformDue), 'cash']].map(([label, value, icon]) => <AdminMetric key={label} label={label} value={value} icon={icon} />)}
       </div><p className="admin-notice">Cash amounts come from completed trips. Platform fees are recorded as due, not remitted. Electronic payments and settlement are not connected.</p></>}
       {tab === 'Profile' && <div className="admin-profile"><ProfileEditor /></div>}
+      {tab === 'Reports' && <AdminReports terminals={terminals} />}
       {tab === 'Notifications' && <div className="admin-panel admin-notifications"><NotificationInbox result={notifications} /></div>}
     </main>
     <nav className="admin-bottom-nav" aria-label="Mobile administrator navigation">{pages.slice(0, 4).map((item) => navItem(item, true))}<button type="button" aria-haspopup="dialog" aria-expanded={dialog?.type === 'more'} aria-current={moreActive ? 'page' : undefined} onClick={() => setDialog({ type: 'more' })} disabled={mutationBusy}><AdminIcon name="more" /><span>More</span></button></nav>

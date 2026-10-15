@@ -38,6 +38,8 @@ have `Cache-Control: no-store`. Read/retry/export does not write ledger entries.
 - A completed synthetic trip remained available after the isolated backend
   restart. Its driver opened the PHP 62 receipt in the mobile dialog and
   downloaded `TRI-00000097.html` through the actual browser download action.
+- The owning passenger opened the same saved PHP 62 receipt from Ride History;
+  an administrator opened it from the report's Included trips list.
 - Phone dialog content fits within the viewport and scrolls to export controls.
   This does not verify the native print destination or physical-device behavior.
 

@@ -26,9 +26,12 @@ The current milestone is a tested **multi-terminal cash-trip portfolio flow**:
 - Manual TODA selection, separate queues/fare policies and driver assignment.
 - Pickup-pin-based nearby TODA suggestions, ranked by approximate straight-line proximity. Selecting a TODA keeps both trip pins and requests a fresh road-route fare quote.
 - Restored demo-style administrator UI with responsive cards, bottom navigation and scrollable dialogs.
+- Driver mobile navigation, action-first trip controls, searchable history and separate earnings/vehicle screens.
+- Private completed-trip cash receipts with HTML download and browser print/PDF controls (not tax invoices).
+- Administrator date/TODA-filtered cash analytics with daily/source/TODA breakdowns and snapshot-consistent analytics/trip CSV exports.
 - Local-demo password recovery: expiring one-use codes and old-session revocation. Delivery uses a private local outbox, not SMS.
 
-Verification: 41 backend tests, 14 frontend helper tests, frontend
+Verification: 52 backend tests, 27 frontend helper tests, frontend
 lint/build and backend packaging passed. Browser checks covered admin setup,
 passenger booking, driver acceptance/start/completion, fee-free walk-ins, history,
 profile editing, repeat bookings, persisted cash records after restart, and the
@@ -66,15 +69,22 @@ Local database files, environment secrets, backups, private keys, business
 documents and local tool settings are excluded from version control. Supply your
 own local configuration; never place private credentials in frontend `VITE_*` values.
 
-## Feature branch: Nearby TODA suggestions
+## Local feature branches
 
-This branch adds proximity suggestions on top of the local admin-UI branch.
-It retains saved notifications, multiple TODAs, local-demo recovery, and the
-current working trip flow. Proximity does not confirm operator coverage or
-driver availability, and it is never used as the fare distance.
+Current branch `codex/admin-analytics-reports` is stacked on
+`codex/trip-receipts`, `codex/driver-mobile-ui`,
+`codex/nearby-toda-suggestions` and `codex/admin-mobile-ui`.
+Merge the admin-UI branch first, then nearby suggestions, driver UI, receipts,
+and analytics/reports. These local branches have not been pushed.
+
+Saved notifications, multiple TODAs, local-demo recovery and the current trip
+flow are retained. Proximity is not coverage approval or fare distance. Reports
+are saved cash records, not verified payments, revenue settlement or profit.
 
 See [recovery implementation, tests and limitations](docs/PASSWORD-RECOVERY.md),
 [TODA behavior](docs/MULTIPLE-TODAS.md) and
 [saved notification behavior](docs/RIDE-NOTIFICATIONS.md). See
 [nearby TODA checks](docs/NEARBY-TODAS.md) and [admin UI checks](docs/ADMIN_UI.md)
-for the current local changes. Neither local feature branch is published yet.
+for the earlier local changes. New module guides:
+[driver UI](docs/DRIVER_MOBILE.md), [receipts](docs/TRIP_RECEIPTS.md) and
+[admin analytics/exports](docs/ADMIN_REPORTS.md), including tests and limitations.
