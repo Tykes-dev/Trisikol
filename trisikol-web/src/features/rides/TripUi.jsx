@@ -4,6 +4,7 @@ import MapTiles from '../../components/common/MapTiles';
 import Button from '../../components/common/Button';
 import 'leaflet/dist/leaflet.css';
 import { money, statusText } from './format';
+import TripReceipt from '../receipts/TripReceipt';
 
 function MapEvents({ onSelect }) {
   useMapEvents({ click: (event) => onSelect?.({ lat: event.latlng.lat, lng: event.latlng.lng }) });
@@ -80,6 +81,7 @@ export function RideCard({ ride, actions = [], busy, onAction }) {
     <p>{ride.driver ? `Driver: ${ride.driver.name}` : 'No driver assigned yet'}{ride.passenger && ` · Passenger: ${ride.passenger.name}`}</p>
     {ride.offerExpiresAt && <small>Offer expires at {new Date(ride.offerExpiresAt).toLocaleTimeString()}</small>}
     <FareBreakdown fare={ride.fare} />
+    {ride.status === 'COMPLETED' && <TripReceipt rideId={ride.id} />}
     {actions.length > 0 && <div className="action-row">{actions.map((action) => <Button key={action}
       disabled={busy} onClick={() => onAction(ride.id, action)}>{({ accept: 'Accept', decline: 'Decline', start: 'Start trip', complete: 'Confirm cash received & complete', cancel: 'Cancel trip' })[action]}</Button>)}</div>}
   </article>;
